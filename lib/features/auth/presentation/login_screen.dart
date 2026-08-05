@@ -135,6 +135,7 @@ class LoginScreen extends HookConsumerWidget {
                           TextField(
                             controller: name,
                             textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                               labelText: 'Your name',
                             ),
@@ -145,12 +146,14 @@ class LoginScreen extends HookConsumerWidget {
                           controller: email,
                           keyboardType: TextInputType.emailAddress,
                           autocorrect: false,
+                          textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(labelText: 'Email'),
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: password,
                           obscureText: true,
+                          textInputAction: TextInputAction.done,
                           decoration: const InputDecoration(
                             labelText: 'Password',
                           ),
