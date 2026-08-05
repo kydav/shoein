@@ -1,0 +1,106 @@
+name: iOS — Deploy
+
+# Manual only — does not run on push/PR.
+on:
+  workflow_dispatch:
+
+# ── Required repo secrets ────────────────────────────────────────────────────
+#   GOOGLE_SERVICE_INFO_PLIST        base64 of ios/Runner/GoogleService-Info.plist
+#   IOS_DIST_CERT_P12_BASE64         base64 of the Apple Distribution cert (.p12)
+#   IOS_DIST_CERT_PASSWORD           password for that .p12
+#   IOS_PROVISIONING_PROFILE_BASE64  base64 of the App Store provisioning profile
+#   IOS_TEAM_ID                      Apple Developer Team ID
+#   APP_STORE_CONNECT_KEY_ID         App Store Connect API key id
+#   APP_STORE_CONNECT_ISSUER_ID      App Store Connect API issuer id
+#   APP_STORE_CONNECT_PRIVATE_KEY    App Store Connect API private key (.p8 contents)
+# ─────────────────────────────────────────────────────────────────────────────
+# Shoein' has no special entitlements (no push / Sign in with Apple), so a plain
+# `flutter build ipa` with manual signing archives, signs and exports in one go.
+
+jobs:
+  deploy:
+    name: Build & upload to TestFlight
+    runs-on: macos-latest
+    env:
+      BUNDLE_ID: app.auaha.shoein
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Restore Firebase config
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+
+      - name: Install provisioning profile
+        env:
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          echo "$PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/dist.mobileprovision"
+          security cms -D -i "$RUNNER_TEMP/dist.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
+          NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist")
+          for dir in \
+            "$HOME/Library/MobileDevice/Provisioning Profiles" \
+            "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$RUNNER_TEMP/dist.mobileprovision" "$dir/$UUID.mobileprovision"
+          done
+          echo "PROFILE_NAME=$NAME" >> "$GITHUB_ENV"
+          echo "Installed profile '$NAME' ($UUID)"
+
+      - name: Write ExportOptions.plist
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          cat > ios/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key><string>${PROFILE_NAME}</string>
+            </dict>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build signed IPA
+        run: |
+          flutter build ipa --release \
+            --build-number=${{ github.run_number }} \
+            --export-options-plist=ios/ExportOptions.plist
+          IPA=$(ls build/ios/ipa/*.ipa | head -1)
+          echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
+          echo "Exported IPA: $IPA"
+
+      - name: Upload to TestFlight
+        uses: apple-actions/upload-testflight-build@v3
+        with:
+          app-path: ${{ env.IPA_PATH }}
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
