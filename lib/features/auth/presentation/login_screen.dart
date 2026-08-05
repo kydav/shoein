@@ -1,9 +1,43 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/services/firebase_bootstrap.dart';
 import 'package:shoein/core/theme/app_theme.dart';
+
+/// Turns raw auth exceptions into short, friendly messages for end users.
+String friendlyAuthError(Object e, {required bool isSignUp}) {
+  if (e is FirebaseAuthException) {
+    switch (e.code) {
+      case 'invalid-email':
+        return "That email address doesn't look right.";
+      case 'user-disabled':
+        return 'This account has been disabled. Contact support if you think this is a mistake.';
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password. Please try again.';
+      case 'email-already-in-use':
+        return 'An account with this email already exists. Try signing in instead.';
+      case 'weak-password':
+        return 'Please choose a stronger password — at least 6 characters.';
+      case 'missing-password':
+        return 'Please enter your password.';
+      case 'network-request-failed':
+        return 'No internet connection. Check your network and try again.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a moment and try again.';
+      case 'operation-not-allowed':
+        return "Email sign-in isn't available right now. Please try again later.";
+      default:
+        return isSignUp
+            ? "We couldn't create your account. Please try again."
+            : "We couldn't sign you in. Please try again.";
+    }
+  }
+  return 'Something went wrong. Please try again.';
+}
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -18,6 +52,15 @@ class LoginScreen extends HookConsumerWidget {
     final error = useState<String?>(null);
 
     Future<void> submit() async {
+      // Basic client-side checks so users get instant, clear feedback.
+      if (email.text.trim().isEmpty || password.text.isEmpty) {
+        error.value = 'Please enter your email and password.';
+        return;
+      }
+      if (isSignUp.value && name.text.trim().isEmpty) {
+        error.value = 'Please enter your name.';
+        return;
+      }
       busy.value = true;
       error.value = null;
       try {
@@ -31,9 +74,10 @@ class LoginScreen extends HookConsumerWidget {
         } else {
           await auth.signIn(email: email.text.trim(), password: password.text);
         }
+        // On success the auth state changes and the router navigates away,
+        // disposing this screen — so we don't reset `busy` here.
       } catch (e) {
-        error.value = e.toString();
-      } finally {
+        error.value = friendlyAuthError(e, isSignUp: isSignUp.value);
         busy.value = false;
       }
     }
@@ -50,20 +94,15 @@ class LoginScreen extends HookConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      color: kForge,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Icon(
-                      Icons.hardware_rounded,
-                      color: Colors.white,
-                      size: 36,
+                  Center(
+                    child: Image.asset(
+                      'assets/logo/shoein_mark.png',
+                      width: 96,
+                      height: 96,
+                      filterQuality: FilterQuality.medium,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                   const Text(
                     "Shoein'",
                     textAlign: TextAlign.center,
