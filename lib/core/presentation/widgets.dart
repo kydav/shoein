@@ -20,9 +20,9 @@ class SoftCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Colors.white,
+        color: color ?? context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kBorderColor),
+        border: Border.all(color: context.colors.border),
       ),
       child: child,
     );
@@ -67,7 +67,7 @@ class EmptyState extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: kTextSecondary,
+                color: context.colors.textSecondary,
                 height: 1.5,
               ),
             ),

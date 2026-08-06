@@ -122,78 +122,88 @@ class LoginScreen extends HookConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (isSignUp.value) ...[
+                  // The login is a fixed branded screen (dark bg + white card);
+                  // force light styling inside the card so inputs look right
+                  // regardless of the app's light/dark setting.
+                  Theme(
+                    data: AppTheme.light,
+                    child: Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (isSignUp.value) ...[
+                            TextField(
+                              controller: name,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              decoration: const InputDecoration(
+                                labelText: 'Your name',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           TextField(
-                            controller: name,
-                            textCapitalization: TextCapitalization.words,
+                            controller: email,
+                            keyboardType: TextInputType.emailAddress,
+                            autocorrect: false,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
-                              labelText: 'Your name',
+                              labelText: 'Email',
                             ),
                           ),
                           const SizedBox(height: 12),
-                        ],
-                        TextField(
-                          controller: email,
-                          keyboardType: TextInputType.emailAddress,
-                          autocorrect: false,
-                          textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'Email'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: password,
-                          obscureText: true,
-                          textInputAction: TextInputAction.done,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                          ),
-                          onSubmitted: (_) => submit(),
-                        ),
-                        if (error.value != null) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            error.value!,
-                            style: const TextStyle(
-                              color: kOverdueRed,
-                              fontSize: 12,
+                          TextField(
+                            controller: password,
+                            obscureText: true,
+                            textInputAction: TextInputAction.done,
+                            decoration: const InputDecoration(
+                              labelText: 'Password',
                             ),
+                            onSubmitted: (_) => submit(),
                           ),
-                        ],
-                        const SizedBox(height: 18),
-                        FilledButton(
-                          onPressed: busy.value ? null : submit,
-                          child: busy.value
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                          if (error.value != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              error.value!,
+                              style: const TextStyle(
+                                color: kOverdueRed,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 18),
+                          FilledButton(
+                            onPressed: busy.value ? null : submit,
+                            child: busy.value
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    isSignUp.value
+                                        ? 'Create account'
+                                        : 'Sign in',
                                   ),
-                                )
-                              : Text(
-                                  isSignUp.value ? 'Create account' : 'Sign in',
-                                ),
-                        ),
-                        TextButton(
-                          onPressed: () => isSignUp.value = !isSignUp.value,
-                          child: Text(
-                            isSignUp.value
-                                ? 'Already have an account? Sign in'
-                                : 'New here? Create an account',
                           ),
-                        ),
-                      ],
+                          TextButton(
+                            onPressed: () => isSignUp.value = !isSignUp.value,
+                            child: Text(
+                              isSignUp.value
+                                  ? 'Already have an account? Sign in'
+                                  : 'New here? Create an account',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   if (!firebaseReady) ...[

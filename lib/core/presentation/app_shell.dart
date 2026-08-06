@@ -28,7 +28,8 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      backgroundColor: kBgPage,
+      backgroundColor: context.colors.pageBg,
+      extendBody: true, // so the nav pill can float over the body
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(

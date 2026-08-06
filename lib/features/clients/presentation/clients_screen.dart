@@ -17,10 +17,13 @@ class ClientsScreen extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Clients')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/clients/new'),
-        icon: const Icon(Icons.add),
-        label: const Text('Client'),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 125.0),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push('/clients/new'),
+          icon: const Icon(Icons.add),
+          label: const Text('Client'),
+        ),
       ),
       body: clientsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -69,9 +72,9 @@ class ClientsScreen extends HookConsumerWidget {
                   child: Text(
                     'No clients match "${query.value}".',
                     textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: kTextSecondary),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
                   ),
                 ),
             ],
@@ -128,7 +131,10 @@ class _ClientTile extends ConsumerWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: kTextSecondary),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.colors.textSecondary,
+          ),
         ],
       ),
     );

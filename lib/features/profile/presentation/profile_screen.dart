@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/providers/data_providers.dart';
+import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -12,6 +13,8 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authNotifierProvider);
     final clients = ref.watch(clientsProvider).value ?? const [];
+    final themeMode = ref.watch(themeModeProvider);
+    final mapStyle = ref.watch(mapStyleNameProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -62,6 +65,69 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   '${clients.length} ${clients.length == 1 ? 'client' : 'clients'}',
                   style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Appearance',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 14),
+                Text('Theme', style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<ThemeMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: ThemeMode.system,
+                        label: Text('System'),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        label: Text('Light'),
+                      ),
+                      ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                    ],
+                    selected: {themeMode},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selection) => ref
+                        .read(themeModeProvider.notifier)
+                        .set(selection.first),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Map style',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                    DropdownButton<MapStyle>(
+                      value: mapStyle,
+                      underline: const SizedBox.shrink(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          ref.read(mapStyleNameProvider.notifier).set(value);
+                        }
+                      },
+                      items: [
+                        for (final style in MapStyle.values)
+                          DropdownMenuItem(
+                            value: style,
+                            child: Text(style.label),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

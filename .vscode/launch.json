@@ -8,7 +8,10 @@
         {
             "name": "shoein",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args":[
+                "--dart-define-from-file=.env"
+            ]
         },
         {
             "name": "shoein (profile mode)",
