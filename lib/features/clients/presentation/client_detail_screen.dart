@@ -156,13 +156,14 @@ class ClientDetailScreen extends ConsumerWidget {
   }
 }
 
-class _MiniMap extends StatelessWidget {
+class _MiniMap extends ConsumerWidget {
   final Client client;
   const _MiniMap({required this.client});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final point = LatLng(client.lat!, client.lng!);
+    final styleAsync = ref.watch(mapStyleProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ClipRRect(
@@ -180,7 +181,8 @@ class _MiniMap extends StatelessWidget {
                   ),
                 ),
                 children: [
-                  appTileLayer(),
+                  if (styleAsync.hasValue)
+                    appVectorTileLayer(styleAsync.requireValue),
                   MarkerLayer(
                     markers: [
                       Marker(

@@ -1,53 +1,45 @@
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vector_map_tiles/vector_map_tiles.dart';
 
-/// Stadia Maps API key, injected at build time:
+/// Map tiles come from **OpenFreeMap** — a free, keyless, commercial-use-OK
+/// OpenStreetMap vector tile host (funded by donations). No API key or `.env`
+/// value is needed. Attribution is required and rendered by [appMapAttribution].
 ///
-///   flutter run --dart-define=STADIA_API_KEY=YOUR_KEY
-///
-/// Get a free key (no credit card) at https://client.stadiamaps.com/ and add
-/// this app's bundle id (`app.auaha.shoein`) as an allowed property so the key
-/// can't be reused elsewhere.
-///
-/// When the key is empty (e.g. local dev without one) the app falls back to
-/// OpenStreetMap's public tiles. That's fine for development, but those tiles
-/// must NOT ship to production — OSM's tile usage policy forbids it, which is
-/// what the console warning is about. Provide a Stadia key for release builds.
-const _stadiaApiKey = String.fromEnvironment('STADIA_API_KEY');
+/// These are *vector* tiles, rendered on-device by `vector_map_tiles`, so maps
+/// stay crisp at every zoom. Available styles: liberty | bright | positron |
+/// dark | fiord.
+const _openFreeMapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
 
-/// Whether a production tile provider (Stadia) is configured.
-bool get mapTilesConfigured => _stadiaApiKey.isNotEmpty;
+/// Loads and parses the vector style once, cached for the app's lifetime so
+/// every map screen shares it (the network fetch happens a single time).
+final mapStyleProvider = FutureProvider<Style>((ref) async {
+  ref.keepAlive();
+  return StyleReader(uri: _openFreeMapStyleUrl).read();
+});
 
-/// Shared tile layer used by every map in the app.
-TileLayer appTileLayer() {
-  if (mapTilesConfigured) {
-    return TileLayer(
-      urlTemplate:
-          'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png?api_key=$_stadiaApiKey',
-      userAgentPackageName: 'app.auaha.shoein',
-    );
-  }
-  // Dev fallback — public OSM tiles (prints the usage-policy warning).
-  return TileLayer(
-    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    userAgentPackageName: 'app.auaha.shoein',
-  );
-}
+/// Builds the shared vector tile layer from a loaded [Style]. Add it to a
+/// `FlutterMap`'s children once [mapStyleProvider] has resolved.
+VectorTileLayer appVectorTileLayer(Style style) => VectorTileLayer(
+  theme: style.theme,
+  tileProviders: style.providers,
+  tileOffset: TileOffset.DEFAULT,
+);
 
-/// Shared attribution overlay, required by both Stadia and OpenStreetMap.
+/// Shared attribution overlay, required by OpenStreetMap + OpenFreeMap.
 RichAttributionWidget appMapAttribution() {
   return RichAttributionWidget(
     alignment: AttributionAlignment.bottomLeft,
     showFlutterMapAttribution: false,
     attributions: [
-      if (mapTilesConfigured)
-        TextSourceAttribution(
-          'Stadia Maps',
-          onTap: () => _open('https://stadiamaps.com/'),
-        ),
       TextSourceAttribution(
         'OpenStreetMap contributors',
         onTap: () => _open('https://www.openstreetmap.org/copyright'),
+      ),
+      TextSourceAttribution(
+        'OpenFreeMap',
+        onTap: () => _open('https://openfreemap.org/'),
       ),
     ],
   );

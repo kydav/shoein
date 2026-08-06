@@ -15,6 +15,7 @@ class MapScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clientsAsync = ref.watch(clientsProvider);
+    final styleAsync = ref.watch(mapStyleProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Map')),
@@ -37,7 +38,8 @@ class MapScreen extends ConsumerWidget {
               initialZoom: located.length == 1 ? 13 : 9,
             ),
             children: [
-              appTileLayer(),
+              if (styleAsync.hasValue)
+                appVectorTileLayer(styleAsync.requireValue),
               MarkerLayer(
                 markers: [
                   for (final c in located)
