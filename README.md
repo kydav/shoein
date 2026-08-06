@@ -38,9 +38,21 @@ lib/
 `DemoRepository` (seeded, in-memory) when Firebase isn't configured.
 
 ### Map & geocoding
-Uses `flutter_map` with OpenStreetMap tiles (no API key) and the `geocoding`
-package (native platform geocoder, no API key) to turn a client's address into a
-map pin when you save it.
+Uses `flutter_map` and the `geocoding` package (native platform geocoder, no API
+key) to turn a client's address into a map pin when you save it.
+
+**Map tiles:** production builds use **Stadia Maps** (free tier, no credit card —
+get a key at https://client.stadiamaps.com/ and allow the `app.auaha.shoein`
+bundle id). Pass the key at build time:
+
+```bash
+flutter run --dart-define=STADIA_API_KEY=YOUR_KEY
+```
+
+The CI deploy workflows read it from the `STADIA_API_KEY` repo secret. Without a
+key the app falls back to OpenStreetMap's public tiles — fine for local dev, but
+they must **not** ship to production (hence the console usage-policy warning).
+Tile source + attribution live in `lib/core/presentation/map_tiles.dart`.
 
 ## Running
 ```bash

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shoein/core/models/client.dart';
+import 'package:shoein/core/presentation/map_tiles.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
@@ -36,10 +37,7 @@ class MapScreen extends ConsumerWidget {
               initialZoom: located.length == 1 ? 13 : 9,
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'app.auaha.shoein',
-              ),
+              appTileLayer(),
               MarkerLayer(
                 markers: [
                   for (final c in located)
@@ -52,6 +50,7 @@ class MapScreen extends ConsumerWidget {
                     ),
                 ],
               ),
+              appMapAttribution(),
             ],
           );
         },
