@@ -8,6 +8,7 @@ import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/presentation/map_tiles.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/data_providers.dart';
+import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -92,9 +93,9 @@ class ClientDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     '(${horses.length})',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: kTextSecondary),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -103,16 +104,16 @@ class ClientDetailScreen extends ConsumerWidget {
                 SoftCard(
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.add_circle_outline,
-                        color: kTextSecondary,
+                        color: context.colors.textSecondary,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'No horses yet. Add this client\'s horses to track service dates.',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: kTextSecondary),
+                              ?.copyWith(color: context.colors.textSecondary),
                         ),
                       ),
                     ],
@@ -163,7 +164,7 @@ class _MiniMap extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final point = LatLng(client.lat!, client.lng!);
-    final styleAsync = ref.watch(mapStyleProvider);
+    final mapStyle = ref.watch(mapStyleNameProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ClipRRect(
@@ -181,8 +182,7 @@ class _MiniMap extends ConsumerWidget {
                   ),
                 ),
                 children: [
-                  if (styleAsync.hasValue)
-                    appVectorTileLayer(styleAsync.requireValue),
+                  appTileLayer(mapStyle),
                   MarkerLayer(
                     markers: [
                       Marker(
@@ -290,10 +290,10 @@ class _HorseTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: kAnvil.withValues(alpha: 0.06),
+              color: kForge.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.pets, color: kAnvil),
+            child: const Icon(Icons.pets, color: kForge),
           ),
           const SizedBox(width: 12),
           Expanded(

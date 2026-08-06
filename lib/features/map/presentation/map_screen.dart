@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/presentation/map_tiles.dart';
 import 'package:shoein/core/presentation/widgets.dart';
+import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
@@ -15,7 +16,7 @@ class MapScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clientsAsync = ref.watch(clientsProvider);
-    final styleAsync = ref.watch(mapStyleProvider);
+    final mapStyle = ref.watch(mapStyleNameProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Map')),
@@ -38,8 +39,7 @@ class MapScreen extends ConsumerWidget {
               initialZoom: located.length == 1 ? 13 : 9,
             ),
             children: [
-              if (styleAsync.hasValue)
-                appVectorTileLayer(styleAsync.requireValue),
+              appTileLayer(mapStyle),
               MarkerLayer(
                 markers: [
                   for (final c in located)

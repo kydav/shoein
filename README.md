@@ -41,12 +41,20 @@ lib/
 Uses `flutter_map` and the `geocoding` package (native platform geocoder, no API
 key) to turn a client's address into a map pin when you save it.
 
-**Map tiles:** the app uses **OpenFreeMap** — a free, keyless, commercial-use-OK
-OpenStreetMap vector-tile host. No API key, `.env` value, or account is needed;
-it just requires attribution (rendered on the map). Vector tiles are drawn
-on-device by `vector_map_tiles`. Tile source, style, and attribution live in
-`lib/core/presentation/map_tiles.dart` (swap the style there — liberty / bright /
-positron / dark / fiord).
+**Map tiles:** the app uses **Geoapify** raster tiles — its free plan allows
+commercial use within the daily quota and requires attribution (rendered on the
+map). Get a free key at https://myprojects.geoapify.com/ and provide it at build
+time (local reads a gitignored `.env`; CI uses the `GEOAPIFY_API_KEY` secret):
+
+```bash
+cp .env.example .env      # then paste your key into GEOAPIFY_API_KEY
+flutter run --dart-define-from-file=.env
+```
+
+Without a key the app falls back to OpenStreetMap's public tiles — fine for
+local dev, but not permitted for production (hence the console usage-policy
+warning). The user picks the visible style in Profile → Appearance; tile source,
+styles, and attribution live in `lib/core/presentation/map_tiles.dart`.
 
 ## Running
 ```bash
