@@ -61,3 +61,8 @@ key.properties
 **/*.mobileprovision
 **/*.p12
 **/*.p8
+
+# Local secrets (API keys etc.) — loaded via --dart-define-from-file=.env
+# The committed .env.example documents the required keys.
+.env
+.env.local
