@@ -10,6 +10,8 @@ import 'package:shoein/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:shoein/features/horses/presentation/horse_form_screen.dart';
 import 'package:shoein/features/map/presentation/map_screen.dart';
 import 'package:shoein/features/profile/presentation/profile_screen.dart';
+import 'package:shoein/features/schedule/presentation/appointment_form_screen.dart';
+import 'package:shoein/features/schedule/presentation/schedule_screen.dart';
 import 'package:shoein/features/subscription/presentation/paywall_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -27,6 +29,20 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
       GoRoute(path: '/paywall', builder: (c, s) => const PaywallScreen()),
+      GoRoute(
+        path: '/schedule/new',
+        builder: (c, s) {
+          final day = s.uri.queryParameters['day'];
+          return AppointmentFormScreen(
+            initialDay: day == null ? null : DateTime.tryParse(day),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/schedule/:id/edit',
+        builder: (c, s) =>
+            AppointmentFormScreen(appointmentId: s.pathParameters['id']),
+      ),
       GoRoute(
         path: '/clients/new',
         builder: (c, s) => const ClientFormScreen(),
@@ -64,6 +80,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/clients',
             pageBuilder: (c, s) =>
                 const NoTransitionPage(child: ClientsScreen()),
+          ),
+          GoRoute(
+            path: '/schedule',
+            pageBuilder: (c, s) =>
+                const NoTransitionPage(child: ScheduleScreen()),
           ),
           GoRoute(
             path: '/map',

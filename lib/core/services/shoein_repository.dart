@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../models/appointment.dart';
 import '../models/client.dart';
 import '../models/horse.dart';
 import '../models/service_record.dart';
@@ -24,6 +25,10 @@ abstract class ShoeinRepository {
   /// Record a visit: writes the service record and rolls the horse's
   /// lastServiceDate forward to the visit date (which reschedules next-due).
   Future<void> logService(ServiceRecord record);
+
+  Stream<List<Appointment>> watchAppointments();
+  Future<String> upsertAppointment(Appointment appointment);
+  Future<void> deleteAppointment(String id);
 }
 
 // ─── Firestore ────────────────────────────────────────────────────────────────
@@ -111,6 +116,30 @@ class FirestoreRepository implements ShoeinRepository {
       'lastServiceDate': Timestamp.fromDate(record.date),
     }, SetOptions(merge: true));
   }
+
+  CollectionReference<Map<String, dynamic>> get _appointments =>
+      _db.collection('users').doc(_uid).collection('appointments');
+
+  @override
+  Stream<List<Appointment>> watchAppointments() => _appointments
+      .orderBy('start')
+      .snapshots()
+      .map((s) => s.docs.map(Appointment.fromDoc).toList());
+
+  @override
+  Future<String> upsertAppointment(Appointment appointment) async {
+    if (appointment.id.isEmpty) {
+      final ref = await _appointments.add(appointment.toMap());
+      return ref.id;
+    }
+    await _appointments
+        .doc(appointment.id)
+        .set(appointment.toMap(), SetOptions(merge: true));
+    return appointment.id;
+  }
+
+  @override
+  Future<void> deleteAppointment(String id) => _appointments.doc(id).delete();
 }
 
 // ─── In-memory demo ───────────────────────────────────────────────────────────
@@ -278,5 +307,36 @@ class DemoRepository implements ShoeinRepository {
     }
     _servicesChanged.add(null);
     _horsesChanged.add(null);
+  }
+
+  final List<Appointment> _appointments = [];
+  final _appointmentsChanged = StreamController<void>.broadcast();
+
+  @override
+  Stream<List<Appointment>> watchAppointments() async* {
+    List<Appointment> current() =>
+        List.of(_appointments)..sort((a, b) => a.start.compareTo(b.start));
+    yield current();
+    yield* _appointmentsChanged.stream.map((_) => current());
+  }
+
+  @override
+  Future<String> upsertAppointment(Appointment appointment) async {
+    if (appointment.id.isEmpty) {
+      final created = appointment.copyWith(id: _id());
+      _appointments.add(created);
+      _appointmentsChanged.add(null);
+      return created.id;
+    }
+    final i = _appointments.indexWhere((a) => a.id == appointment.id);
+    if (i >= 0) _appointments[i] = appointment;
+    _appointmentsChanged.add(null);
+    return appointment.id;
+  }
+
+  @override
+  Future<void> deleteAppointment(String id) async {
+    _appointments.removeWhere((a) => a.id == id);
+    _appointmentsChanged.add(null);
   }
 }

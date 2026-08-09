@@ -8,6 +8,8 @@
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Shoein' uses your location to show where you are on the map while viewing your clients.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Shoein' adds your appointments to your phone's calendar when you choose to.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

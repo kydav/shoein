@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shoein/core/models/appointment.dart';
 import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/models/service_record.dart';
@@ -40,6 +41,11 @@ final servicesProvider =
           .watch(repositoryProvider)
           .watchServices(key.clientId, key.horseId),
     );
+
+/// All scheduled appointments, earliest first.
+final appointmentsProvider = StreamProvider<List<Appointment>>(
+  (ref) => ref.watch(repositoryProvider).watchAppointments(),
+);
 
 /// A horse paired with its owning client, for the dashboard.
 typedef DueHorse = ({Client client, Horse horse});

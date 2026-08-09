@@ -21,6 +21,12 @@ class AppShell extends StatelessWidget {
       active: Icons.people_alt,
       label: 'Clients',
     ),
+    (
+      path: '/schedule',
+      icon: Icons.calendar_month_outlined,
+      active: Icons.calendar_month,
+      label: 'Schedule',
+    ),
     (path: '/map', icon: Icons.map_outlined, active: Icons.map, label: 'Map'),
     (
       path: '/profile',
