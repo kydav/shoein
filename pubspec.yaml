@@ -54,7 +54,9 @@ dependencies:
   url_launcher: ^6.3.2
   shared_preferences: ^2.5.5
   purchases_flutter: ^10.8.0
-  mapbox_maps_flutter: ^2.28.0
+  # Pinned to 2.25.0 (matches Prior) — 2.28.0's android build.gradle breaks on
+  # AGP 9 with builtInKotlin=false ("Could not find method kotlin()").
+  mapbox_maps_flutter: 2.25.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
