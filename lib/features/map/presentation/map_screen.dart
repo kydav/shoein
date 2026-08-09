@@ -92,6 +92,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _showStyleSheet() {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: context.colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -99,7 +100,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       builder: (_) => _MapStyleSheet(
         current: ref.read(mapStyleNameProvider),
         onSelected: (style) {
-          Navigator.pop(context);
+          Navigator.of(context, rootNavigator: true).pop();
           ref.read(mapStyleNameProvider.notifier).set(style);
         },
       ),
@@ -123,7 +124,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ref.listen(mapStyleNameProvider, (_, s) => _map?.loadStyleURI(s.styleUri));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Map')),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 125.0),
+        child: Material(
+          color: context.colors.surface,
+          shape: const CircleBorder(),
+          elevation: 3,
+          child: IconButton(
+            icon: const Icon(Icons.layers_outlined, color: kForge),
+            tooltip: 'Map style',
+            onPressed: _showStyleSheet,
+          ),
+        ),
+      ),
       body: clientsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -137,29 +150,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   'Add an address to a client and they\'ll show up here as a pin.',
             );
           }
-          return Stack(
-            children: [
-              MapWidget(
-                key: const ValueKey('clients-map'),
-                styleUri: style.styleUri,
-                onMapCreated: _onMapCreated,
-                onStyleLoadedListener: _onStyleLoaded,
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Material(
-                  color: context.colors.surface,
-                  shape: const CircleBorder(),
-                  elevation: 3,
-                  child: IconButton(
-                    icon: const Icon(Icons.layers_outlined, color: kForge),
-                    tooltip: 'Map style',
-                    onPressed: _showStyleSheet,
-                  ),
-                ),
-              ),
-            ],
+          return MapWidget(
+            key: const ValueKey('clients-map'),
+            styleUri: style.styleUri,
+            onMapCreated: _onMapCreated,
+            onStyleLoadedListener: _onStyleLoaded,
           );
         },
       ),

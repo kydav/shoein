@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -376,8 +377,20 @@ Future<void> _launch(String uri) async {
 }
 
 Future<void> _directions(Client client) async {
-  final q = client.hasLocation
-      ? '${client.lat},${client.lng}'
-      : Uri.encodeComponent(client.address);
-  await _launch('https://www.google.com/maps/dir/?api=1&destination=$q');
+  try {
+    final url = Platform.isIOS
+        ? Uri.parse(
+            'maps:${client.lat},${client.lng}?q=${client.lat},${client.lng}',
+          )
+        : Uri.parse(
+            'geo:${client.lat},${client.lng}?q=${client.lat},${client.lng}',
+          );
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  } catch (error) {
+    debugPrint('Error launching directions: $error');
+  }
 }
