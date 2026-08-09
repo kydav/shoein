@@ -71,3 +71,20 @@ cover it.
 
 Client text reminders (prefilled SMS to the client), hoof photos per visit,
 invoicing / payment tracking, day/route map view, earnings summary.
+
+## Invoicing  ✅ (built)
+
+- Set business name + one payment link (Venmo/Stripe) in Profile.
+- Service records carry a `paid` flag; the log-visit sheet has a Paid toggle.
+- "Create invoice" on a client pulls their unpaid, priced visits as line items
+  → live total → **Email** (PDF attached, `flutter_email_sender`), **Text** (SMS
+  summary + pay link), **Preview** (`printing`), and **Mark paid**.
+- PDF built with the `pdf` package: business header, line items, total, and a
+  clickable "Pay online" link.
+
+## Route planner  ✅ (built)
+
+- Multi-select clients (with addresses), **Optimize route** (nearest-neighbor +
+  2-opt on coordinates) → numbered stop order + total distance.
+- **Open in Google Maps** with the stops as waypoints for turn-by-turn.
+- Reached from the "Plan route" button on the Map tab. Subscription-gated.

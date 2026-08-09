@@ -8,6 +8,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:shoein/core/config/map_config.dart';
 import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/presentation/widgets.dart';
+import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
@@ -111,6 +112,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget build(BuildContext context) {
     final clientsAsync = ref.watch(clientsProvider);
     final style = ref.watch(mapStyleNameProvider);
+    final readOnly = ref.watch(isReadOnlyProvider);
 
     // Re-add pins when the client set changes.
     ref.listen(clientsProvider, (_, next) {
@@ -126,15 +128,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 125.0),
-        child: Material(
-          color: context.colors.surface,
-          shape: const CircleBorder(),
-          elevation: 3,
-          child: IconButton(
-            icon: const Icon(Icons.layers_outlined, color: kForge),
-            tooltip: 'Map style',
-            onPressed: _showStyleSheet,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: 'plan-route',
+              onPressed: () => context.push(readOnly ? '/paywall' : '/route'),
+              icon: Icon(
+                readOnly ? Icons.lock_outline_rounded : Icons.alt_route,
+              ),
+              label: const Text('Plan route'),
+            ),
+            const SizedBox(height: 10),
+            Material(
+              color: context.colors.surface,
+              shape: const CircleBorder(),
+              elevation: 3,
+              child: IconButton(
+                icon: const Icon(Icons.layers_outlined, color: kForge),
+                tooltip: 'Map style',
+                onPressed: _showStyleSheet,
+              ),
+            ),
+          ],
         ),
       ),
       body: clientsAsync.when(
