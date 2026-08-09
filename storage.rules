@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Each farrier can only read/write files under their own folder
+    // (e.g. visit photos at users/{uid}/service_photos/...).
+    match /users/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Default deny.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

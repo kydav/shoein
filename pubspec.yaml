@@ -69,6 +69,8 @@ dependencies:
   printing: ^5.15.0
   flutter_email_sender: ^10.0.1
   path_provider: ^2.1.6
+  image_picker: ^1.2.3
+  firebase_storage: ^13.4.6
 dev_dependencies:
   flutter_test:
     sdk: flutter

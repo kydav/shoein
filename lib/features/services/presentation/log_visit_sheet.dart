@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/models/service_record.dart';
+import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/providers/data_providers.dart';
+import 'package:shoein/core/services/firebase_bootstrap.dart';
+import 'package:shoein/core/services/photo_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 const _workTypes = ['Trim', 'Full set', 'Reset', 'Fronts', 'Other'];
@@ -43,6 +47,35 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
   final _cost = TextEditingController();
   bool _paid = false;
   bool _busy = false;
+  bool _uploading = false;
+  final List<String> _photos = [];
+
+  Future<void> _addPhoto(ImageSource source) async {
+    final uid = ref.read(authNotifierProvider).uid;
+    if (!firebaseReady || uid.isEmpty) return;
+    final file = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 70,
+      maxWidth: 1600,
+    );
+    if (file == null) return;
+    setState(() => _uploading = true);
+    try {
+      final url = await PhotoService.uploadServicePhoto(
+        uid,
+        await file.readAsBytes(),
+      );
+      if (mounted) setState(() => _photos.add(url));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Photo upload failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -79,6 +112,7 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
               notes: _notes.text.trim(),
               cost: double.tryParse(_cost.text.trim()),
               paid: _paid,
+              photoUrls: List.of(_photos),
             ),
           );
       final next = _date.add(Duration(days: widget.horse.intervalWeeks * 7));
@@ -180,6 +214,61 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
               hintText: 'What you did, anything to watch…',
             ),
           ),
+          if (firebaseReady) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text('Photos', style: Theme.of(context).textTheme.labelMedium),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Take photo',
+                  onPressed: _uploading
+                      ? null
+                      : () => _addPhoto(ImageSource.camera),
+                  icon: const Icon(Icons.photo_camera_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Choose photo',
+                  onPressed: _uploading
+                      ? null
+                      : () => _addPhoto(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_outlined),
+                ),
+              ],
+            ),
+            if (_uploading) const LinearProgressIndicator(),
+            if (_photos.isNotEmpty)
+              SizedBox(
+                height: 76,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _photos.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) => Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          _photos[i],
+                          width: 76,
+                          height: 76,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: IconButton(
+                          icon: const Icon(Icons.cancel, size: 20),
+                          color: kAnvil,
+                          onPressed: () => setState(() => _photos.removeAt(i)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
           const SizedBox(height: 18),
           FilledButton(
             onPressed: _busy ? null : _save,

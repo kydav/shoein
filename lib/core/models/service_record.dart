@@ -10,6 +10,7 @@ class ServiceRecord {
   final String notes;
   final double? cost;
   final bool paid;
+  final List<String> photoUrls;
 
   const ServiceRecord({
     required this.id,
@@ -20,6 +21,7 @@ class ServiceRecord {
     this.notes = '',
     this.cost,
     this.paid = false,
+    this.photoUrls = const [],
   });
 
   factory ServiceRecord.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -34,6 +36,7 @@ class ServiceRecord {
       notes: (d['notes'] ?? '') as String,
       cost: (d['cost'] as num?)?.toDouble(),
       paid: (d['paid'] ?? false) as bool,
+      photoUrls: (d['photoUrls'] as List?)?.cast<String>() ?? const [],
     );
   }
 
@@ -45,6 +48,7 @@ class ServiceRecord {
     'notes': notes,
     'cost': cost,
     'paid': paid,
+    'photoUrls': photoUrls,
   };
 
   ServiceRecord copyWith({String? id, bool? paid}) => ServiceRecord(

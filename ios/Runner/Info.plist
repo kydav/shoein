@@ -10,6 +10,10 @@
 	<string>Shoein' uses your location to show where you are on the map while viewing your clients.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Shoein' adds your appointments to your phone's calendar when you choose to.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Shoein' uses the camera so you can add photos to a horse's visit log.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shoein' lets you attach photos from your library to a horse's visit log.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

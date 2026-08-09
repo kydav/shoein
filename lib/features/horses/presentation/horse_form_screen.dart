@@ -285,24 +285,67 @@ class _ServiceTile extends StatelessWidget {
   final ServiceRecord record;
   const _ServiceTile({required this.record});
 
+  void _view(BuildContext context, String url) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(12),
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: InteractiveViewer(child: Image.network(url)),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = [
       DateFormat.yMMMd().format(record.date),
       if (record.workType.isNotEmpty) record.workType,
     ].join('  ·  ');
-    return ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.event_available_outlined),
-      title: Text(title),
-      subtitle: record.notes.isEmpty ? null : Text(record.notes),
-      trailing: record.cost == null
-          ? null
-          : Text(
-              '\$${record.cost!.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.titleSmall,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.event_available_outlined),
+          title: Text(title),
+          subtitle: record.notes.isEmpty ? null : Text(record.notes),
+          trailing: record.cost == null
+              ? null
+              : Text(
+                  '\$${record.cost!.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+        ),
+        if (record.photoUrls.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SizedBox(
+              height: 64,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: record.photoUrls.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (_, i) => GestureDetector(
+                  onTap: () => _view(context, record.photoUrls[i]),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      record.photoUrls[i],
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
             ),
+          ),
+      ],
     );
   }
 }
