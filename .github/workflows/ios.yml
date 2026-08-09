@@ -13,6 +13,7 @@ on:
 #   APP_STORE_CONNECT_KEY_ID         App Store Connect API key id
 #   APP_STORE_CONNECT_ISSUER_ID      App Store Connect API issuer id
 #   APP_STORE_CONNECT_PRIVATE_KEY    App Store Connect API private key (.p8 contents)
+#   MAPBOX_DOWNLOADS_TOKEN           Mapbox secret token (downloads:read) — SDK download
 # ─────────────────────────────────────────────────────────────────────────────
 # Shoein' has no special entitlements (no push / Sign in with Apple), so a plain
 # `flutter build ipa` with manual signing archives, signs and exports in one go.
@@ -34,6 +35,13 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Configure Mapbox SDK download token
+        env:
+          MAPBOX_DOWNLOADS_TOKEN: ${{ secrets.MAPBOX_DOWNLOADS_TOKEN }}
+        run: |
+          printf 'machine api.mapbox.com\n  login mapbox\n  password %s\n' "$MAPBOX_DOWNLOADS_TOKEN" >> ~/.netrc
+          chmod 600 ~/.netrc
 
       - name: Analyze
         run: flutter analyze
