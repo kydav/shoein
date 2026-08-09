@@ -1,7 +1,8 @@
 # Shoein' — Trim-Cycle, Dashboard & Scheduling Plan
 
 The retention engine that makes the subscription worth paying for: never miss a
-trim/shoe cycle. Build order is ①→②→③→④→⑤; each step is shippable on its own.
+trim/shoe cycle. Build order was ①→②→③→④→⑤ — **all five are built**; this doc is
+kept as the reference for how they fit together.
 
 ## Data model
 
@@ -23,7 +24,7 @@ cover it.
 - Interval-based `ServiceBadge` (Overdue / Due today / Due in Nd / Nd ago),
   replacing the old fixed 42-day badge.
 
-## ② Dashboard / "Due" home screen
+## ② Dashboard / "Due" home screen  ✅ (built)
 
 - Becomes the landing tab. Aggregates all horses across clients, grouped
   **Overdue · Due this week · Coming up**, sorted by urgency.
@@ -32,20 +33,21 @@ cover it.
 - `dueHorsesProvider` — watch clients → their horses, or a
   `collectionGroup('horses')` query (+ index) depending on read volume.
 
-## ③ Log visit → auto-reschedule
+## ③ Log visit → auto-reschedule  ✅ (built)
 
 - "Log visit" stamps `lastServiceDate = today`, writes a ServiceRecord, and
   `nextDue` recomputes automatically. Optional quick note + cost.
 - **Service history** list on the horse detail.
 
-## ④ Local push notifications
+## ④ Local push notifications  ✅ (built)
 
 - `flutter_local_notifications` + `timezone` (on-device, no server).
-- A weekly summary ("3 horses due this week") + optional per-horse nudges.
+- One reminder per horse on its next-due date (7am), auto-rescheduled whenever
+  the due list or the "Trim reminders" toggle changes.
 - iOS notification permission; Android `POST_NOTIFICATIONS` (API 33+).
-- Rescheduled whenever intervals/services change.
+- (A weekly "N due this week" summary is a possible future addition.)
 
-## ⑤ Scheduling + calendar
+## ⑤ Scheduling + calendar  ✅ (built)
 
 - **Schedule tab**: month calendar (`table_calendar`) + day agenda of
   appointments.
