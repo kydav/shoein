@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/models/horse.dart';
+import 'package:shoein/core/models/service_record.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/services/firebase_bootstrap.dart';
 import 'package:shoein/core/services/shoein_repository.dart';
@@ -28,6 +29,17 @@ final clientProvider = StreamProvider.family<Client?, String>(
 final horsesProvider = StreamProvider.family<List<Horse>, String>(
   (ref, clientId) => ref.watch(repositoryProvider).watchHorses(clientId),
 );
+
+/// Logged visits for a horse, newest first.
+final servicesProvider =
+    StreamProvider.family<
+      List<ServiceRecord>,
+      ({String clientId, String horseId})
+    >(
+      (ref, key) => ref
+          .watch(repositoryProvider)
+          .watchServices(key.clientId, key.horseId),
+    );
 
 /// A horse paired with its owning client, for the dashboard.
 typedef DueHorse = ({Client client, Horse horse});

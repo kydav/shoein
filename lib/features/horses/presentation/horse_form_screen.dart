@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shoein/core/models/horse.dart';
+import 'package:shoein/core/models/service_record.dart';
+import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
+import 'package:shoein/features/services/presentation/log_visit_sheet.dart';
 
 class HorseFormScreen extends HookConsumerWidget {
   final String clientId;
@@ -20,6 +23,7 @@ class HorseFormScreen extends HookConsumerWidget {
     for (final h in horses) {
       if (h.id == horseId) existing = h;
     }
+    final horseForLog = existing;
 
     final name = useTextEditingController();
     final breed = useTextEditingController();
@@ -188,6 +192,54 @@ class HorseFormScreen extends HookConsumerWidget {
                   )
                 : Text(isEditing ? 'Save changes' : 'Add horse'),
           ),
+          if (horseForLog != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                if (ref.read(isReadOnlyProvider)) {
+                  context.push('/paywall');
+                  return;
+                }
+                showLogVisitSheet(
+                  context,
+                  clientId: clientId,
+                  horse: horseForLog,
+                );
+              },
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Log a visit'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Service history',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            ref
+                .watch(
+                  servicesProvider((clientId: clientId, horseId: horseId!)),
+                )
+                .when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: LinearProgressIndicator(),
+                  ),
+                  error: (e, _) => const Text('Could not load history.'),
+                  data: (records) => records.isEmpty
+                      ? Text(
+                          'No visits logged yet.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        )
+                      : Column(
+                          children: [
+                            for (final r in records) _ServiceTile(record: r),
+                          ],
+                        ),
+                ),
+          ],
         ],
       ),
     );
@@ -225,6 +277,32 @@ class _Field extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ServiceTile extends StatelessWidget {
+  final ServiceRecord record;
+  const _ServiceTile({required this.record});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = [
+      DateFormat.yMMMd().format(record.date),
+      if (record.workType.isNotEmpty) record.workType,
+    ].join('  ·  ');
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.event_available_outlined),
+      title: Text(title),
+      subtitle: record.notes.isEmpty ? null : Text(record.notes),
+      trailing: record.cost == null
+          ? null
+          : Text(
+              '\$${record.cost!.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
     );
   }
 }

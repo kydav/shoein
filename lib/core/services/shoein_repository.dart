@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/client.dart';
 import '../models/horse.dart';
+import '../models/service_record.dart';
 
 /// Data access for clients and their horses. Two implementations:
 /// [FirestoreRepository] (real) and [DemoRepository] (in-memory, for running
@@ -17,6 +18,12 @@ abstract class ShoeinRepository {
   Stream<List<Horse>> watchHorses(String clientId);
   Future<void> upsertHorse(Horse horse);
   Future<void> deleteHorse(String clientId, String horseId);
+
+  Stream<List<ServiceRecord>> watchServices(String clientId, String horseId);
+
+  /// Record a visit: writes the service record and rolls the horse's
+  /// lastServiceDate forward to the visit date (which reschedules next-due).
+  Future<void> logService(ServiceRecord record);
 }
 
 // ─── Firestore ────────────────────────────────────────────────────────────────
@@ -84,6 +91,26 @@ class FirestoreRepository implements ShoeinRepository {
   @override
   Future<void> deleteHorse(String clientId, String horseId) =>
       _horses(clientId).doc(horseId).delete();
+
+  CollectionReference<Map<String, dynamic>> _services(
+    String clientId,
+    String horseId,
+  ) => _horses(clientId).doc(horseId).collection('services');
+
+  @override
+  Stream<List<ServiceRecord>> watchServices(String clientId, String horseId) =>
+      _services(clientId, horseId)
+          .orderBy('date', descending: true)
+          .snapshots()
+          .map((s) => s.docs.map(ServiceRecord.fromDoc).toList());
+
+  @override
+  Future<void> logService(ServiceRecord record) async {
+    await _services(record.clientId, record.horseId).add(record.toMap());
+    await _horses(record.clientId).doc(record.horseId).set({
+      'lastServiceDate': Timestamp.fromDate(record.date),
+    }, SetOptions(merge: true));
+  }
 }
 
 // ─── In-memory demo ───────────────────────────────────────────────────────────
@@ -219,6 +246,37 @@ class DemoRepository implements ShoeinRepository {
   @override
   Future<void> deleteHorse(String clientId, String horseId) async {
     _horses[clientId]?.removeWhere((h) => h.id == horseId);
+    _horsesChanged.add(null);
+  }
+
+  final Map<String, List<ServiceRecord>> _services = {};
+  final _servicesChanged = StreamController<void>.broadcast();
+
+  @override
+  Stream<List<ServiceRecord>> watchServices(
+    String clientId,
+    String horseId,
+  ) async* {
+    List<ServiceRecord> current() =>
+        List.of(_services[horseId] ?? const [])
+          ..sort((a, b) => b.date.compareTo(a.date));
+    yield current();
+    yield* _servicesChanged.stream.map((_) => current());
+  }
+
+  @override
+  Future<void> logService(ServiceRecord record) async {
+    final list = _services.putIfAbsent(record.horseId, () => []);
+    list.add(record.copyWith(id: _id()));
+    // Roll the horse's last-service date forward.
+    final horses = _horses[record.clientId];
+    if (horses != null) {
+      final i = horses.indexWhere((h) => h.id == record.horseId);
+      if (i >= 0) {
+        horses[i] = horses[i].copyWith(lastServiceDate: record.date);
+      }
+    }
+    _servicesChanged.add(null);
     _horsesChanged.add(null);
   }
 }

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/services/contact_actions.dart';
 import 'package:shoein/core/theme/app_theme.dart';
+import 'package:shoein/features/services/presentation/log_visit_sheet.dart';
 import 'package:shoein/features/subscription/presentation/access_banner.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -117,18 +117,7 @@ class _DueRow extends ConsumerWidget {
         context.push('/paywall');
         return;
       }
-      final messenger = ScaffoldMessenger.of(context);
-      await ref
-          .read(repositoryProvider)
-          .upsertHorse(horse.copyWith(lastServiceDate: DateTime.now()));
-      final next = DateTime.now().add(Duration(days: horse.intervalWeeks * 7));
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '${horse.name} logged — next due ${DateFormat.MMMd().format(next)}',
-          ),
-        ),
-      );
+      await showLogVisitSheet(context, clientId: client.id, horse: horse);
     }
 
     return SoftCard(
