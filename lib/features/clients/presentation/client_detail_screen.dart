@@ -7,6 +7,7 @@ import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/presentation/map_tiles.dart';
 import 'package:shoein/core/presentation/widgets.dart';
+import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
@@ -20,6 +21,7 @@ class ClientDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final clientAsync = ref.watch(clientProvider(clientId));
     final horsesAsync = ref.watch(horsesProvider(clientId));
+    final readOnly = ref.watch(isReadOnlyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,19 +29,23 @@ class ClientDetailScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => context.push('/clients/$clientId/edit'),
+            onPressed: () =>
+                context.push(readOnly ? '/paywall' : '/clients/$clientId/edit'),
             tooltip: 'Edit client',
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded),
-            onPressed: () => _confirmDelete(context, ref),
-            tooltip: 'Delete client',
-          ),
+          if (!readOnly)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded),
+              onPressed: () => _confirmDelete(context, ref),
+              tooltip: 'Delete client',
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/clients/$clientId/horse/new'),
-        icon: const Icon(Icons.add),
+        onPressed: () => context.push(
+          readOnly ? '/paywall' : '/clients/$clientId/horse/new',
+        ),
+        icon: Icon(readOnly ? Icons.lock_outline_rounded : Icons.add),
         label: const Text('Horse'),
       ),
       body: clientAsync.when(

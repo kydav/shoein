@@ -4,11 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/router/router.dart';
 import 'package:shoein/core/services/firebase_bootstrap.dart';
+import 'package:shoein/core/services/subscription_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await bootstrapFirebase();
+  await configureRevenueCat();
   final prefs = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(

@@ -9,6 +9,7 @@ import 'package:shoein/features/clients/presentation/clients_screen.dart';
 import 'package:shoein/features/horses/presentation/horse_form_screen.dart';
 import 'package:shoein/features/map/presentation/map_screen.dart';
 import 'package:shoein/features/profile/presentation/profile_screen.dart';
+import 'package:shoein/features/subscription/presentation/paywall_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final auth = ref.read(authNotifierProvider);
@@ -24,6 +25,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
+      GoRoute(path: '/paywall', builder: (c, s) => const PaywallScreen()),
       GoRoute(
         path: '/clients/new',
         builder: (c, s) => const ClientFormScreen(),

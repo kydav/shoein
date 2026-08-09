@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shoein/core/presentation/widgets.dart';
+import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
+import 'package:shoein/core/services/subscription_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -15,6 +18,37 @@ class ProfileScreen extends ConsumerWidget {
     final clients = ref.watch(clientsProvider).value ?? const [];
     final themeMode = ref.watch(themeModeProvider);
     final mapStyle = ref.watch(mapStyleNameProvider);
+    final access = ref.watch(accessProvider);
+    final daysLeft = ref.watch(trialDaysLeftProvider);
+
+    final subscribed = access == AccessStatus.subscribed;
+    final subStatusLine = switch (access) {
+      AccessStatus.subscribed => "Shoein' Pro — active",
+      AccessStatus.trialing =>
+        'Free trial — ${daysLeft ?? 0} ${daysLeft == 1 ? 'day' : 'days'} left',
+      AccessStatus.expired => 'Trial ended — read-only',
+      AccessStatus.loading => 'Checking subscription…',
+    };
+
+    Future<void> restore() async {
+      try {
+        await ref.read(subscriptionProvider.notifier).restore();
+        if (!context.mounted) return;
+        final ok = ref.read(accessProvider) == AccessStatus.subscribed;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ok ? 'Purchases restored.' : 'No active subscription found.',
+            ),
+          ),
+        );
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't restore purchases.")),
+        );
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -128,6 +162,44 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.workspace_premium_outlined, color: kForge),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Subscription',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  subStatusLine,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (!subscribed)
+                  FilledButton(
+                    onPressed: () => context.push('/paywall'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(46),
+                    ),
+                    child: const Text('Subscribe'),
+                  ),
+                TextButton(
+                  onPressed: restore,
+                  child: const Text('Restore purchases'),
                 ),
               ],
             ),

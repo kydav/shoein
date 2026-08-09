@@ -2,6 +2,16 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // The farrier's own user doc (holds the free-trial start).
+    // `trialStartedAt` is write-once so the trial can't be reset.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && (resource.data.trialStartedAt == null
+            || request.resource.data.trialStartedAt == resource.data.trialStartedAt);
+    }
+
     // Each farrier can only read/write their own clients and horses.
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;

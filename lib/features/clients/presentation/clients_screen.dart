@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/presentation/widgets.dart';
+import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
+import 'package:shoein/features/subscription/presentation/access_banner.dart';
 
 class ClientsScreen extends HookConsumerWidget {
   const ClientsScreen({super.key});
@@ -13,73 +15,82 @@ class ClientsScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clientsAsync = ref.watch(clientsProvider);
+    final readOnly = ref.watch(isReadOnlyProvider);
     final query = useState('');
+
+    void addClient() => context.push(readOnly ? '/paywall' : '/clients/new');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Clients')),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 125.0),
         child: FloatingActionButton.extended(
-          onPressed: () => context.push('/clients/new'),
-          icon: const Icon(Icons.add),
+          onPressed: addClient,
+          icon: Icon(readOnly ? Icons.lock_outline_rounded : Icons.add),
           label: const Text('Client'),
         ),
       ),
-      body: clientsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (all) {
-          final clients = query.value.isEmpty
-              ? all
-              : all
-                    .where(
-                      (c) => c.name.toLowerCase().contains(
-                        query.value.toLowerCase(),
-                      ),
-                    )
-                    .toList();
-          if (all.isEmpty) {
-            return EmptyState(
-              icon: Icons.people_alt_outlined,
-              title: 'No clients yet',
-              message:
-                  'Add your first client to start tracking their horses and service schedule.',
-              action: FilledButton.icon(
-                onPressed: () => context.push('/clients/new'),
-                icon: const Icon(Icons.add),
-                label: const Text('Add client'),
-              ),
-            );
-          }
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-            children: [
-              TextField(
-                onChanged: (v) => query.value = v,
-                decoration: const InputDecoration(
-                  hintText: 'Search clients',
-                  prefixIcon: Icon(Icons.search),
-                ),
-              ),
-              const SizedBox(height: 12),
-              for (final c in clients) ...[
-                _ClientTile(client: c),
-                const SizedBox(height: 10),
-              ],
-              if (clients.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: Text(
-                    'No clients match "${query.value}".',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.colors.textSecondary,
+      body: Column(
+        children: [
+          const AccessBanner(),
+          Expanded(
+            child: clientsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+              data: (all) {
+                final clients = query.value.isEmpty
+                    ? all
+                    : all
+                          .where(
+                            (c) => c.name.toLowerCase().contains(
+                              query.value.toLowerCase(),
+                            ),
+                          )
+                          .toList();
+                if (all.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.people_alt_outlined,
+                    title: 'No clients yet',
+                    message:
+                        'Add your first client to start tracking their horses and service schedule.',
+                    action: FilledButton.icon(
+                      onPressed: addClient,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add client'),
                     ),
-                  ),
-                ),
-            ],
-          );
-        },
+                  );
+                }
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  children: [
+                    TextField(
+                      onChanged: (v) => query.value = v,
+                      decoration: const InputDecoration(
+                        hintText: 'Search clients',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final c in clients) ...[
+                      _ClientTile(client: c),
+                      const SizedBox(height: 10),
+                    ],
+                    if (clients.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 40),
+                        child: Text(
+                          'No clients match "${query.value}".',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: context.colors.textSecondary),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
