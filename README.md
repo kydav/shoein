@@ -38,23 +38,22 @@ lib/
 `DemoRepository` (seeded, in-memory) when Firebase isn't configured.
 
 ### Map & geocoding
-Uses `flutter_map` and the `geocoding` package (native platform geocoder, no API
-key) to turn a client's address into a map pin when you save it.
+The `geocoding` package (native platform geocoder, no API key) turns a client's
+address into a map pin when you save it.
 
-**Map tiles:** the app uses **Geoapify** raster tiles — its free plan allows
-commercial use within the daily quota and requires attribution (rendered on the
-map). Get a free key at https://myprojects.geoapify.com/ and provide it at build
-time (local reads a gitignored `.env`; CI uses the `GEOAPIFY_API_KEY` secret):
+**Maps:** the app uses **Mapbox** (`mapbox_maps_flutter`) — modern vector maps,
+same as the Prior app. The user switches map style from the layers button on the
+Map screen (Standard / Satellite / Outdoors / Dark).
 
-```bash
-cp .env.example .env      # then paste your key into GEOAPIFY_API_KEY
-flutter run --dart-define-from-file=.env
-```
-
-Without a key the app falls back to OpenStreetMap's public tiles — fine for
-local dev, but not permitted for production (hence the console usage-policy
-warning). The user picks the visible style in Profile → Appearance; tile source,
-styles, and attribution live in `lib/core/presentation/map_tiles.dart`.
+- The **public access token** is embedded in `lib/core/config/map_config.dart`
+  (override with `--dart-define=MAPBOX_ACCESS_TOKEN=...` for a Shoein'-specific
+  one). Public tokens are safe to ship; usage is billed to the Mapbox account.
+  Mapbox's mobile free tier (25k MAU) covers this app's volume, commercial use
+  included.
+- Building requires Mapbox's **secret downloads token** (`MAPBOX_DOWNLOADS_TOKEN`,
+  scope `downloads:read`) in your global `~/.gradle/gradle.properties` (Android)
+  and `~/.netrc` (iOS) — the same one-time setup the Prior app uses. In CI it's
+  provided as a secret.
 
 ## Running
 ```bash

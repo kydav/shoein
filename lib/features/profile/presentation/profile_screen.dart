@@ -17,7 +17,6 @@ class ProfileScreen extends ConsumerWidget {
     final auth = ref.watch(authNotifierProvider);
     final clients = ref.watch(clientsProvider).value ?? const [];
     final themeMode = ref.watch(themeModeProvider);
-    final mapStyle = ref.watch(mapStyleNameProvider);
     final access = ref.watch(accessProvider);
     final daysLeft = ref.watch(trialDaysLeftProvider);
 
@@ -135,33 +134,6 @@ class ProfileScreen extends ConsumerWidget {
                         .read(themeModeProvider.notifier)
                         .set(selection.first),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Map style',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                    DropdownButton<MapStyle>(
-                      value: mapStyle,
-                      underline: const SizedBox.shrink(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          ref.read(mapStyleNameProvider.notifier).set(value);
-                        }
-                      },
-                      items: [
-                        for (final style in MapStyle.values)
-                          DropdownMenuItem(
-                            value: style,
-                            child: Text(style.label),
-                          ),
-                      ],
-                    ),
-                  ],
                 ),
               ],
             ),

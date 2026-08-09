@@ -32,18 +32,26 @@ final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
 );
 
 // ─── Map style, persisted ────────────────────────────────────────────────────
-/// Geoapify raster map styles offered in the picker. [slug] is the Geoapify
-/// style id used in the tile URL.
+/// Mapbox styles offered in the on-map style switcher. [styleUri] is the
+/// Mapbox style URL passed to the map.
 enum MapStyle {
-  osmBright('OSM Bright', 'osm-bright'),
-  positron('Positron', 'positron'),
-  darkMatter('Dark', 'dark-matter'),
-  toner('Toner', 'toner'),
-  osmCarto('Classic', 'osm-carto');
+  standard('Standard', Icons.map_outlined, 'mapbox://styles/mapbox/standard'),
+  satellite(
+    'Satellite',
+    Icons.satellite_alt_outlined,
+    'mapbox://styles/mapbox/standard-satellite',
+  ),
+  outdoors(
+    'Outdoors',
+    Icons.terrain_outlined,
+    'mapbox://styles/mapbox/outdoors-v12',
+  ),
+  dark('Dark', Icons.dark_mode_outlined, 'mapbox://styles/mapbox/dark-v11');
 
-  const MapStyle(this.label, this.slug);
+  const MapStyle(this.label, this.icon, this.styleUri);
   final String label;
-  final String slug;
+  final IconData icon;
+  final String styleUri;
 }
 
 class MapStyleNotifier extends Notifier<MapStyle> {
@@ -54,7 +62,7 @@ class MapStyleNotifier extends Notifier<MapStyle> {
     final saved = ref.read(sharedPreferencesProvider).getString(_key);
     return MapStyle.values.firstWhere(
       (s) => s.name == saved,
-      orElse: () => MapStyle.osmBright,
+      orElse: () => MapStyle.standard,
     );
   }
 

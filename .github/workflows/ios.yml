@@ -13,7 +13,6 @@ on:
 #   APP_STORE_CONNECT_KEY_ID         App Store Connect API key id
 #   APP_STORE_CONNECT_ISSUER_ID      App Store Connect API issuer id
 #   APP_STORE_CONNECT_PRIVATE_KEY    App Store Connect API private key (.p8 contents)
-#   GEOAPIFY_API_KEY                 Geoapify API key (map tiles)
 # ─────────────────────────────────────────────────────────────────────────────
 # Shoein' has no special entitlements (no push / Sign in with Apple), so a plain
 # `flutter build ipa` with manual signing archives, signs and exports in one go.
@@ -93,7 +92,6 @@ jobs:
         run: |
           flutter build ipa --release \
             --build-number=${{ github.run_number }} \
-            --dart-define=GEOAPIFY_API_KEY=${{ secrets.GEOAPIFY_API_KEY }} \
             --export-options-plist=ios/ExportOptions.plist
           IPA=$(ls build/ios/ipa/*.ipa | head -1)
           echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"

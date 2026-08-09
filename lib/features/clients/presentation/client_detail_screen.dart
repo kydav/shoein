@@ -1,11 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
+import 'package:shoein/core/config/map_config.dart';
 import 'package:shoein/core/models/client.dart';
 import 'package:shoein/core/models/horse.dart';
-import 'package:shoein/core/presentation/map_tiles.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
@@ -163,14 +165,65 @@ class ClientDetailScreen extends ConsumerWidget {
   }
 }
 
-class _MiniMap extends ConsumerWidget {
+class _MiniMap extends ConsumerStatefulWidget {
   final Client client;
   const _MiniMap({required this.client});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final point = LatLng(client.lat!, client.lng!);
-    final mapStyle = ref.watch(mapStyleNameProvider);
+  ConsumerState<_MiniMap> createState() => _MiniMapState();
+}
+
+class _MiniMapState extends ConsumerState<_MiniMap> {
+  MapboxMap? _map;
+  Uint8List? _pinBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    rootBundle.load(kMapPinAsset).then((d) {
+      _pinBytes = d.buffer.asUint8List();
+    });
+  }
+
+  Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
+    final map = _map;
+    if (map == null || !mounted) return;
+    // Static preview — no interaction.
+    await map.gestures.updateSettings(
+      GesturesSettings(
+        rotateEnabled: false,
+        scrollEnabled: false,
+        pinchToZoomEnabled: false,
+        pitchEnabled: false,
+        doubleTapToZoomInEnabled: false,
+        doubleTouchToZoomOutEnabled: false,
+        quickZoomEnabled: false,
+      ),
+    );
+    final c = widget.client;
+    final bytes = _pinBytes;
+    if (bytes != null) {
+      final pins = await map.annotations.createPointAnnotationManager();
+      await pins.create(
+        PointAnnotationOptions(
+          geometry: Point(coordinates: Position(c.lng!, c.lat!)),
+          image: bytes,
+          iconSize: 0.5,
+          iconAnchor: IconAnchor.BOTTOM,
+        ),
+      );
+    }
+    await map.setCamera(
+      CameraOptions(
+        center: Point(coordinates: Position(c.lng!, c.lat!)),
+        zoom: 13,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = ref.watch(mapStyleNameProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ClipRRect(
@@ -179,32 +232,11 @@ class _MiniMap extends ConsumerWidget {
           height: 170,
           child: Stack(
             children: [
-              FlutterMap(
-                options: MapOptions(
-                  initialCenter: point,
-                  initialZoom: 13,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.none,
-                  ),
-                ),
-                children: [
-                  appTileLayer(mapStyle),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: point,
-                        width: 40,
-                        height: 40,
-                        child: const Icon(
-                          Icons.location_on,
-                          color: kForge,
-                          size: 40,
-                        ),
-                      ),
-                    ],
-                  ),
-                  appMapAttribution(),
-                ],
+              MapWidget(
+                key: ValueKey('mini-${widget.client.id}'),
+                styleUri: style.styleUri,
+                onMapCreated: (m) => _map = m,
+                onStyleLoadedListener: _onStyleLoaded,
               ),
               Positioned(
                 right: 10,
@@ -215,7 +247,7 @@ class _MiniMap extends ConsumerWidget {
                     foregroundColor: kAnvil,
                     minimumSize: const Size(0, 38),
                   ),
-                  onPressed: () => _directions(client),
+                  onPressed: () => _directions(widget.client),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text('Directions'),
                 ),

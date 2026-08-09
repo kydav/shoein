@@ -17,7 +17,6 @@ on:
 #   ANDROID_KEY_ALIAS           key alias
 #   ANDROID_KEY_PASSWORD        key password
 #   PLAY_SERVICE_ACCOUNT_JSON   Play Console service-account JSON (only for upload)
-#   GEOAPIFY_API_KEY            Geoapify API key (map tiles)
 # ─────────────────────────────────────────────────────────────────────────────
 # The signed .aab is always published as a workflow artifact. Uploading to the
 # Play Console is opt-in (the very first release must be uploaded by hand).
@@ -71,7 +70,7 @@ jobs:
           EOF
 
       - name: Build App Bundle
-        run: flutter build appbundle --release --build-number=${{ github.run_number }} --dart-define=GEOAPIFY_API_KEY=${{ secrets.GEOAPIFY_API_KEY }}
+        run: flutter build appbundle --release --build-number=${{ github.run_number }}
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4

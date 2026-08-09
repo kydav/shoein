@@ -1,31 +1,135 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:shoein/core/config/map_config.dart';
 import 'package:shoein/core/models/client.dart';
-import 'package:shoein/core/presentation/map_tiles.dart';
 import 'package:shoein/core/presentation/widgets.dart';
-import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
+import 'package:shoein/core/providers/settings_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
-class MapScreen extends ConsumerWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends ConsumerState<MapScreen> {
+  MapboxMap? _map;
+  PointAnnotationManager? _pins;
+  Uint8List? _pinBytes;
+  final Map<String, String> _annToClient = {};
+  List<Client> _located = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    rootBundle.load(kMapPinAsset).then((d) {
+      _pinBytes = d.buffer.asUint8List();
+    });
+  }
+
+  void _onMapCreated(MapboxMap map) => _map = map;
+
+  // Runs on the first style load and again after each style switch — the
+  // annotation manager lives on the style, so pins are (re)added here.
+  Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
+    final map = _map;
+    if (map == null || !mounted) return;
+    _pins = await map.annotations.createPointAnnotationManager();
+    _pins!.tapEvents(
+      onTap: (annotation) {
+        final id = _annToClient[annotation.id];
+        if (id != null && mounted) context.push('/clients/$id');
+      },
+    );
+    await _addPins();
+    await _fitCamera();
+  }
+
+  Future<void> _addPins() async {
+    final pins = _pins;
+    final bytes = _pinBytes;
+    if (pins == null || bytes == null) return;
+    await pins.deleteAll();
+    _annToClient.clear();
+    for (final c in _located) {
+      final annotation = await pins.create(
+        PointAnnotationOptions(
+          geometry: Point(coordinates: Position(c.lng!, c.lat!)),
+          image: bytes,
+          iconSize: 0.55,
+          iconAnchor: IconAnchor.BOTTOM,
+          textField: c.name,
+          textOffset: [0, 0.6],
+          textSize: 12,
+        ),
+      );
+      _annToClient[annotation.id] = c.id;
+    }
+  }
+
+  Future<void> _fitCamera() async {
+    final map = _map;
+    if (map == null || _located.isEmpty) return;
+    final lat =
+        _located.map((c) => c.lat!).reduce((a, b) => a + b) / _located.length;
+    final lng =
+        _located.map((c) => c.lng!).reduce((a, b) => a + b) / _located.length;
+    await map.setCamera(
+      CameraOptions(
+        center: Point(coordinates: Position(lng, lat)),
+        zoom: _located.length == 1 ? 13 : 8.5,
+      ),
+    );
+  }
+
+  void _showStyleSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _MapStyleSheet(
+        current: ref.read(mapStyleNameProvider),
+        onSelected: (style) {
+          Navigator.pop(context);
+          ref.read(mapStyleNameProvider.notifier).set(style);
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final clientsAsync = ref.watch(clientsProvider);
-    final mapStyle = ref.watch(mapStyleNameProvider);
+    final style = ref.watch(mapStyleNameProvider);
+
+    // Re-add pins when the client set changes.
+    ref.listen(clientsProvider, (_, next) {
+      _located = (next.valueOrNull ?? const [])
+          .where((c) => c.hasLocation)
+          .toList();
+      _addPins();
+      _fitCamera();
+    });
+    // Reload the Mapbox style when the user picks a new one.
+    ref.listen(mapStyleNameProvider, (_, s) => _map?.loadStyleURI(s.styleUri));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Map')),
       body: clientsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (clients) {
-          final located = clients.where((c) => c.hasLocation).toList();
-          if (located.isEmpty) {
+        data: (all) {
+          _located = all.where((c) => c.hasLocation).toList();
+          if (_located.isEmpty) {
             return const EmptyState(
               icon: Icons.map_outlined,
               title: 'No mapped clients',
@@ -33,67 +137,104 @@ class MapScreen extends ConsumerWidget {
                   'Add an address to a client and they\'ll show up here as a pin.',
             );
           }
-          return FlutterMap(
-            options: MapOptions(
-              initialCenter: _center(located),
-              initialZoom: located.length == 1 ? 13 : 9,
-            ),
+          return Stack(
             children: [
-              appTileLayer(mapStyle),
-              MarkerLayer(
-                markers: [
-                  for (final c in located)
-                    Marker(
-                      point: LatLng(c.lat!, c.lng!),
-                      width: 140,
-                      height: 58,
-                      alignment: Alignment.topCenter,
-                      child: _Pin(client: c),
-                    ),
-                ],
+              MapWidget(
+                key: const ValueKey('clients-map'),
+                styleUri: style.styleUri,
+                onMapCreated: _onMapCreated,
+                onStyleLoadedListener: _onStyleLoaded,
               ),
-              appMapAttribution(),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Material(
+                  color: context.colors.surface,
+                  shape: const CircleBorder(),
+                  elevation: 3,
+                  child: IconButton(
+                    icon: const Icon(Icons.layers_outlined, color: kForge),
+                    tooltip: 'Map style',
+                    onPressed: _showStyleSheet,
+                  ),
+                ),
+              ),
             ],
           );
         },
       ),
     );
   }
-
-  LatLng _center(List<Client> clients) {
-    final lat =
-        clients.map((c) => c.lat!).reduce((a, b) => a + b) / clients.length;
-    final lng =
-        clients.map((c) => c.lng!).reduce((a, b) => a + b) / clients.length;
-    return LatLng(lat, lng);
-  }
 }
 
-class _Pin extends StatelessWidget {
-  final Client client;
-  const _Pin({required this.client});
+/// Bottom sheet for choosing the Mapbox style.
+class _MapStyleSheet extends StatelessWidget {
+  final MapStyle current;
+  final void Function(MapStyle) onSelected;
+  const _MapStyleSheet({required this.current, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/clients/${client.id}'),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 14, 24, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.location_on, color: kForge, size: 38),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: kBorderColor),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: context.colors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            child: Text(
-              client.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-            ),
+          ),
+          const SizedBox(height: 18),
+          Text('Map style', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: MapStyle.values.map((s) {
+              final selected = current == s;
+              return GestureDetector(
+                onTap: () => onSelected(s),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? kForge.withValues(alpha: 0.14)
+                            : context.colors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: selected ? kForge : context.colors.border,
+                          width: selected ? 2 : 1,
+                        ),
+                      ),
+                      child: Icon(
+                        s.icon,
+                        color: selected ? kForge : context.colors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      s.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: selected ? kForge : context.colors.textSecondary,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
