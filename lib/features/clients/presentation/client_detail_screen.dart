@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -13,8 +12,8 @@ import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
+import 'package:shoein/core/services/contact_actions.dart';
 import 'package:shoein/core/theme/app_theme.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ClientDetailScreen extends ConsumerWidget {
   final String clientId;
@@ -248,7 +247,7 @@ class _MiniMapState extends ConsumerState<_MiniMap> {
                     foregroundColor: kAnvil,
                     minimumSize: const Size(0, 38),
                   ),
-                  onPressed: () => _directions(widget.client),
+                  onPressed: () => openDirections(widget.client),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text('Directions'),
                 ),
@@ -275,19 +274,19 @@ class _ContactActions extends StatelessWidget {
           _ActionChip(
             icon: Icons.call,
             label: 'Call',
-            onTap: () => _launch('tel:${client.phone}'),
+            onTap: () => callNumber(client.phone),
           ),
         if (client.phone.isNotEmpty)
           _ActionChip(
             icon: Icons.sms_outlined,
             label: 'Text',
-            onTap: () => _launch('sms:${client.phone}'),
+            onTap: () => textNumber(client.phone),
           ),
         if (client.address.isNotEmpty)
           _ActionChip(
             icon: Icons.directions,
             label: 'Directions',
-            onTap: () => _directions(client),
+            onTap: () => openDirections(client),
           ),
       ],
     );
@@ -368,29 +367,5 @@ class _HorseTile extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-Future<void> _launch(String uri) async {
-  final u = Uri.parse(uri);
-  if (await canLaunchUrl(u)) await launchUrl(u);
-}
-
-Future<void> _directions(Client client) async {
-  try {
-    final url = Platform.isIOS
-        ? Uri.parse(
-            'maps:${client.lat},${client.lng}?q=${client.lat},${client.lng}',
-          )
-        : Uri.parse(
-            'geo:${client.lat},${client.lng}?q=${client.lat},${client.lng}',
-          );
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  } catch (error) {
-    debugPrint('Error launching directions: $error');
   }
 }

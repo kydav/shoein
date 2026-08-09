@@ -6,6 +6,7 @@ import 'package:shoein/features/auth/presentation/login_screen.dart';
 import 'package:shoein/features/clients/presentation/client_detail_screen.dart';
 import 'package:shoein/features/clients/presentation/client_form_screen.dart';
 import 'package:shoein/features/clients/presentation/clients_screen.dart';
+import 'package:shoein/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:shoein/features/horses/presentation/horse_form_screen.dart';
 import 'package:shoein/features/map/presentation/map_screen.dart';
 import 'package:shoein/features/profile/presentation/profile_screen.dart';
@@ -14,13 +15,13 @@ import 'package:shoein/features/subscription/presentation/paywall_screen.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final auth = ref.read(authNotifierProvider);
   return GoRouter(
-    initialLocation: '/clients',
+    initialLocation: '/dashboard',
     refreshListenable: auth,
     redirect: (context, state) {
       final loggedIn = auth.isLoggedIn;
       final onLogin = state.matchedLocation == '/login';
       if (!loggedIn && !onLogin) return '/login';
-      if (loggedIn && onLogin) return '/clients';
+      if (loggedIn && onLogin) return '/dashboard';
       return null;
     },
     routes: [
@@ -54,6 +55,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s, child) =>
             AppShell(location: s.matchedLocation, child: child),
         routes: [
+          GoRoute(
+            path: '/dashboard',
+            pageBuilder: (c, s) =>
+                const NoTransitionPage(child: DashboardScreen()),
+          ),
           GoRoute(
             path: '/clients',
             pageBuilder: (c, s) =>

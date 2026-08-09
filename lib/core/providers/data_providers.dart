@@ -28,3 +28,29 @@ final clientProvider = StreamProvider.family<Client?, String>(
 final horsesProvider = StreamProvider.family<List<Horse>, String>(
   (ref, clientId) => ref.watch(repositoryProvider).watchHorses(clientId),
 );
+
+/// A horse paired with its owning client, for the dashboard.
+typedef DueHorse = ({Client client, Horse horse});
+
+/// Every horse across every client, paired with its client and sorted by
+/// soonest-due first (never-serviced sorts last). Reacts as clients/horses
+/// streams update.
+final dueHorsesProvider = Provider<List<DueHorse>>((ref) {
+  final clients = ref.watch(clientsProvider).valueOrNull ?? const [];
+  final out = <DueHorse>[];
+  for (final c in clients) {
+    final horses = ref.watch(horsesProvider(c.id)).valueOrNull ?? const [];
+    for (final h in horses) {
+      out.add((client: c, horse: h));
+    }
+  }
+  out.sort((a, b) {
+    final da = a.horse.daysUntilDue;
+    final db = b.horse.daysUntilDue;
+    if (da == null && db == null) return 0;
+    if (da == null) return 1; // never-serviced last
+    if (db == null) return -1;
+    return da.compareTo(db);
+  });
+  return out;
+});

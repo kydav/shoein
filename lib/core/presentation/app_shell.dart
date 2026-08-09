@@ -10,6 +10,12 @@ class AppShell extends StatelessWidget {
 
   static const _items = [
     (
+      path: '/dashboard',
+      icon: Icons.today_outlined,
+      active: Icons.today,
+      label: 'Today',
+    ),
+    (
       path: '/clients',
       icon: Icons.people_alt_outlined,
       active: Icons.people_alt,
