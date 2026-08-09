@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 class SoftCard extends StatelessWidget {
@@ -79,10 +80,10 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// Small pill showing how recently a horse was serviced.
+/// Small pill showing where a horse is in its trim cycle (interval-based).
 class ServiceBadge extends StatelessWidget {
-  final int? daysSince;
-  const ServiceBadge({required this.daysSince, super.key});
+  final Horse horse;
+  const ServiceBadge({required this.horse, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -105,10 +106,18 @@ class ServiceBadge extends StatelessWidget {
   }
 
   (String, Color) _status() {
-    final d = daysSince;
-    if (d == null) return ('No service yet', kTextSecondary);
-    if (d >= 42) return ('Due — ${d}d', kOverdueRed);
-    if (d >= 35) return ('Soon — ${d}d', kForge);
-    return ('${d}d ago', kSuccessGreen);
+    final days = horse.daysUntilDue;
+    switch (horse.dueStatus) {
+      case DueStatus.neverServiced:
+        return ('No service yet', kTextSecondary);
+      case DueStatus.overdue:
+        return ('Overdue ${-days!}d', kOverdueRed);
+      case DueStatus.dueThisWeek:
+        return (days == 0 ? 'Due today' : 'Due in ${days}d', kForge);
+      case DueStatus.upcoming:
+        return ('Due in ${days}d', kForge);
+      case DueStatus.ok:
+        return ('${horse.daysSinceService}d ago', kSuccessGreen);
+    }
   }
 }

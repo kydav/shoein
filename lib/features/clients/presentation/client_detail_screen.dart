@@ -347,7 +347,7 @@ class _HorseTile extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    ServiceBadge(daysSince: horse.daysSinceService),
+                    ServiceBadge(horse: horse),
                   ],
                 ),
                 if (horse.breed.isNotEmpty || horse.notes.isNotEmpty) ...[

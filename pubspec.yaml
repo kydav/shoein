@@ -60,6 +60,8 @@ dependencies:
   # that breaks with "Could not find method kotlin()"; 2.25.0 hardcodes
   # compileSdk 35 (AAR-metadata conflict with plugins needing 36).
   mapbox_maps_flutter: 2.26.0
+  table_calendar: ^3.2.0
+  add_2_calendar: ^3.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

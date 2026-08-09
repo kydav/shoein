@@ -25,6 +25,7 @@ class HorseFormScreen extends HookConsumerWidget {
     final breed = useTextEditingController();
     final notes = useTextEditingController();
     final serviceDate = useState<DateTime?>(null);
+    final intervalWeeks = useState(kDefaultIntervalWeeks);
     final busy = useState(false);
     final loaded = useRef(false);
 
@@ -34,6 +35,7 @@ class HorseFormScreen extends HookConsumerWidget {
       breed.text = existing.breed;
       notes.text = existing.notes;
       serviceDate.value = existing.lastServiceDate;
+      intervalWeeks.value = existing.intervalWeeks;
     }
 
     Future<void> save() async {
@@ -48,6 +50,7 @@ class HorseFormScreen extends HookConsumerWidget {
           breed: breed.text.trim(),
           notes: notes.text.trim(),
           lastServiceDate: serviceDate.value,
+          intervalWeeks: intervalWeeks.value,
         );
         await ref.read(repositoryProvider).upsertHorse(horse);
         if (context.mounted) context.pop();
@@ -99,6 +102,42 @@ class HorseFormScreen extends HookConsumerWidget {
             controller: breed,
             textCapitalization: TextCapitalization.words,
           ),
+          Text('Trim cycle', style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Text('Every'),
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: intervalWeeks.value > 1
+                    ? () => intervalWeeks.value--
+                    : null,
+              ),
+              SizedBox(
+                width: 84,
+                child: Text(
+                  '${intervalWeeks.value} ${intervalWeeks.value == 1 ? 'week' : 'weeks'}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: intervalWeeks.value < 26
+                    ? () => intervalWeeks.value++
+                    : null,
+              ),
+            ],
+          ),
+          if (serviceDate.value != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                'Next due ${DateFormat.yMMMMd().format(serviceDate.value!.add(Duration(days: intervalWeeks.value * 7)))}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          const SizedBox(height: 14),
           Text(
             'Last service date',
             style: Theme.of(context).textTheme.labelMedium,
