@@ -1,11 +1,7 @@
 // RevenueCat configuration for Shoein'.
-//
-// Fill these in from the Shoein' RevenueCat project (its own project — see the
-// per-app RevenueCat setup). Public app-specific SDK keys:
-//   iOS:     App → API Keys → key starting with "appl_"
-//   Android: App → API Keys → key starting with "goog_"
-const kRevenueCatIosKey = 'appl_REPLACE_ME';
-const kRevenueCatAndroidKey = 'goog_REPLACE_ME';
+
+const kRevenueCatIosKey = 'appl_akZDSDJGKBGZLIfmSaaaYMGMXpd';
+const kRevenueCatAndroidKey = 'goog_fwVYxEzcnCKCuoJyTclamoNVSSZ';
 
 /// Must match the Entitlement identifier created in RevenueCat exactly.
 const kEntitlementId = 'Shoein Pro';
