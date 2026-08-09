@@ -30,6 +30,13 @@ class ClientDetailScreen extends ConsumerWidget {
         title: const Text('Client'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            tooltip: 'Create invoice',
+            onPressed: () => context.push(
+              readOnly ? '/paywall' : '/clients/$clientId/invoice',
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () =>
                 context.push(readOnly ? '/paywall' : '/clients/$clientId/edit'),

@@ -47,6 +47,32 @@ final appointmentsProvider = StreamProvider<List<Appointment>>(
   (ref) => ref.watch(repositoryProvider).watchAppointments(),
 );
 
+/// A billable (unpaid, priced) service paired with its horse's name.
+typedef BillableService = ({ServiceRecord service, String horseName});
+
+/// A client's unpaid, priced service records across all their horses — the
+/// candidates for an invoice, oldest first.
+final clientUnpaidServicesProvider =
+    Provider.family<List<BillableService>, String>((ref, clientId) {
+      final horses =
+          ref.watch(horsesProvider(clientId)).valueOrNull ?? const [];
+      final out = <BillableService>[];
+      for (final h in horses) {
+        final services =
+            ref
+                .watch(servicesProvider((clientId: clientId, horseId: h.id)))
+                .valueOrNull ??
+            const [];
+        for (final s in services) {
+          if (!s.paid && (s.cost ?? 0) > 0) {
+            out.add((service: s, horseName: h.name));
+          }
+        }
+      }
+      out.sort((a, b) => a.service.date.compareTo(b.service.date));
+      return out;
+    });
+
 /// A horse paired with its owning client, for the dashboard.
 typedef DueHorse = ({Client client, Horse horse});
 

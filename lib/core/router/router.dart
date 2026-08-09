@@ -7,6 +7,7 @@ import 'package:shoein/features/clients/presentation/client_detail_screen.dart';
 import 'package:shoein/features/clients/presentation/client_form_screen.dart';
 import 'package:shoein/features/clients/presentation/clients_screen.dart';
 import 'package:shoein/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:shoein/features/invoicing/presentation/invoice_screen.dart';
 import 'package:shoein/features/horses/presentation/horse_form_screen.dart';
 import 'package:shoein/features/map/presentation/map_screen.dart';
 import 'package:shoein/features/profile/presentation/profile_screen.dart';
@@ -50,6 +51,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/clients/:id/edit',
         builder: (c, s) => ClientFormScreen(clientId: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/clients/:id/invoice',
+        builder: (c, s) => InvoiceScreen(clientId: s.pathParameters['id']!),
       ),
       GoRoute(
         path: '/clients/:id/horse/new',
