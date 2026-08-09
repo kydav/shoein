@@ -4,7 +4,7 @@ const kRevenueCatIosKey = 'appl_akZDSDJGKBGZLIfmSaaaYMGMXpd';
 const kRevenueCatAndroidKey = 'goog_fwVYxEzcnCKCuoJyTclamoNVSSZ';
 
 /// Must match the Entitlement identifier created in RevenueCat exactly.
-const kEntitlementId = 'Shoein Pro';
+const kEntitlementId = "Shoein' Pro";
 
 /// Length of the app-managed free trial, in days.
 const kTrialDays = 14;

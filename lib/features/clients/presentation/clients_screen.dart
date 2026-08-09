@@ -19,9 +19,9 @@ class ClientsScreen extends HookConsumerWidget {
     final query = useState('');
 
     void addClient() => context.push(readOnly ? '/paywall' : '/clients/new');
-
     return Scaffold(
       appBar: AppBar(title: const Text('Clients')),
+      resizeToAvoidBottomInset: false,
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 125.0),
         child: FloatingActionButton.extended(

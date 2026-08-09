@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/firebase-ios-sdk",
       "state" : {
-        "revision" : "42e81d245e30e49ea6a5830cf2842d44a1591270",
-        "version" : "12.15.0"
+        "revision" : "33a468adfdb75b53f05a37e7c886ca7c962b5c17",
+        "version" : "12.17.0"
       }
     },
     {
@@ -41,8 +41,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleAppMeasurement.git",
       "state" : {
-        "revision" : "144855f40d8668927f256a3045f7fdc4c3f4338b",
-        "version" : "12.15.0"
+        "revision" : "fceaffa07d22dcd5624d3639fd970351a4a5ad8c",
+        "version" : "12.17.0"
       }
     },
     {
@@ -104,8 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mapbox/mapbox-common-ios.git",
       "state" : {
-        "revision" : "d227a0e727e8aca7794a98355a10b7f6eb7573ed",
-        "version" : "24.28.0"
+        "revision" : "3f75a38a631836aa76f291034a1eac5f614b22c8",
+        "version" : "24.26.0"
       }
     },
     {
@@ -113,8 +113,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mapbox/mapbox-core-maps-ios.git",
       "state" : {
-        "revision" : "d83df539cdea4fee2b396e113b92a593e92b29f6",
-        "version" : "11.28.0"
+        "revision" : "77687efffacd04bd9d22e532bfb4cb71c3ec1e5e",
+        "version" : "11.26.0"
       }
     },
     {
@@ -122,8 +122,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mapbox/mapbox-maps-ios.git",
       "state" : {
-        "revision" : "589e98e93fb1bf5bf9834402870980224d3ccd62",
-        "version" : "11.28.0"
+        "revision" : "b5322aadda8070b019a0a37bc5f64d7b8ca4ca0d",
+        "version" : "11.26.0"
       }
     },
     {

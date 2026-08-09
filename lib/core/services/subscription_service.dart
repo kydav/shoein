@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shoein/core/config/revenue_cat_config.dart';
@@ -14,8 +15,11 @@ Future<void> configureRevenueCat() async {
   if (!firebaseReady) return;
   try {
     final apiKey = Platform.isIOS ? kRevenueCatIosKey : kRevenueCatAndroidKey;
+    await Purchases.setLogLevel(LogLevel.debug);
     await Purchases.configure(PurchasesConfiguration(apiKey));
-  } catch (_) {}
+  } catch (e) {
+    debugPrint(e.toString());
+  }
 }
 
 /// Current RevenueCat customer info. Re-identifies with the signed-in Firebase
@@ -85,7 +89,8 @@ final offeringsProvider = FutureProvider<Offering?>((ref) async {
   try {
     final offerings = await Purchases.getOfferings();
     return offerings.current;
-  } catch (_) {
+  } catch (e) {
+    debugPrint(e.toString());
     return null;
   }
 });
