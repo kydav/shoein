@@ -93,3 +93,24 @@ final remindersEnabledProvider =
     NotifierProvider<RemindersEnabledNotifier, bool>(
       RemindersEnabledNotifier.new,
     );
+
+// ─── Invoicing: business name + one payment link, persisted ───────────────────
+class _StringPref extends FamilyNotifier<String, String> {
+  @override
+  String build(String key) =>
+      ref.read(sharedPreferencesProvider).getString(key) ?? '';
+
+  Future<void> set(String value) async {
+    state = value;
+    await ref.read(sharedPreferencesProvider).setString(arg, value.trim());
+  }
+}
+
+final _stringPrefProvider =
+    NotifierProvider.family<_StringPref, String, String>(_StringPref.new);
+
+/// Business name shown on invoices.
+final businessNameProvider = _stringPrefProvider('business_name');
+
+/// The single Venmo/Stripe/PayPal payment link put on every invoice.
+final paymentLinkProvider = _stringPrefProvider('payment_link');

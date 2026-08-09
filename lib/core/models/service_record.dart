@@ -9,6 +9,7 @@ class ServiceRecord {
   final String workType; // e.g. "Trim", "Full set", "Reset"
   final String notes;
   final double? cost;
+  final bool paid;
 
   const ServiceRecord({
     required this.id,
@@ -18,6 +19,7 @@ class ServiceRecord {
     this.workType = '',
     this.notes = '',
     this.cost,
+    this.paid = false,
   });
 
   factory ServiceRecord.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -31,6 +33,7 @@ class ServiceRecord {
       workType: (d['workType'] ?? '') as String,
       notes: (d['notes'] ?? '') as String,
       cost: (d['cost'] as num?)?.toDouble(),
+      paid: (d['paid'] ?? false) as bool,
     );
   }
 
@@ -41,9 +44,10 @@ class ServiceRecord {
     'workType': workType,
     'notes': notes,
     'cost': cost,
+    'paid': paid,
   };
 
-  ServiceRecord copyWith({String? id}) => ServiceRecord(
+  ServiceRecord copyWith({String? id, bool? paid}) => ServiceRecord(
     id: id ?? this.id,
     clientId: clientId,
     horseId: horseId,
@@ -51,5 +55,6 @@ class ServiceRecord {
     workType: workType,
     notes: notes,
     cost: cost,
+    paid: paid ?? this.paid,
   );
 }

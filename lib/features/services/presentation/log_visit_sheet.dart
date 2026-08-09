@@ -41,6 +41,7 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
   String _workType = _workTypes.first;
   final _notes = TextEditingController();
   final _cost = TextEditingController();
+  bool _paid = false;
   bool _busy = false;
 
   @override
@@ -77,6 +78,7 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
               workType: _workType,
               notes: _notes.text.trim(),
               cost: double.tryParse(_cost.text.trim()),
+              paid: _paid,
             ),
           );
       final next = _date.add(Duration(days: widget.horse.intervalWeeks * 7));
@@ -160,7 +162,16 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
               prefixText: '\$',
             ),
           ),
-          const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Paid'),
+            subtitle: const Text(
+              'Paid on the spot — keep off to invoice later',
+            ),
+            value: _paid,
+            onChanged: (v) => setState(() => _paid = v),
+          ),
+          const SizedBox(height: 4),
           TextField(
             controller: _notes,
             maxLines: 3,

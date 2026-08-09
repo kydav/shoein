@@ -26,6 +26,13 @@ abstract class ShoeinRepository {
   /// lastServiceDate forward to the visit date (which reschedules next-due).
   Future<void> logService(ServiceRecord record);
 
+  Future<void> setServicePaid(
+    String clientId,
+    String horseId,
+    String serviceId,
+    bool paid,
+  );
+
   Stream<List<Appointment>> watchAppointments();
   Future<String> upsertAppointment(Appointment appointment);
   Future<void> deleteAppointment(String id);
@@ -116,6 +123,17 @@ class FirestoreRepository implements ShoeinRepository {
       'lastServiceDate': Timestamp.fromDate(record.date),
     }, SetOptions(merge: true));
   }
+
+  @override
+  Future<void> setServicePaid(
+    String clientId,
+    String horseId,
+    String serviceId,
+    bool paid,
+  ) => _services(
+    clientId,
+    horseId,
+  ).doc(serviceId).set({'paid': paid}, SetOptions(merge: true));
 
   CollectionReference<Map<String, dynamic>> get _appointments =>
       _db.collection('users').doc(_uid).collection('appointments');
@@ -307,6 +325,21 @@ class DemoRepository implements ShoeinRepository {
     }
     _servicesChanged.add(null);
     _horsesChanged.add(null);
+  }
+
+  @override
+  Future<void> setServicePaid(
+    String clientId,
+    String horseId,
+    String serviceId,
+    bool paid,
+  ) async {
+    final list = _services[horseId];
+    if (list != null) {
+      final i = list.indexWhere((s) => s.id == serviceId);
+      if (i >= 0) list[i] = list[i].copyWith(paid: paid);
+    }
+    _servicesChanged.add(null);
   }
 
   final List<Appointment> _appointments = [];

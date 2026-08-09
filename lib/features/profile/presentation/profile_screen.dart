@@ -21,6 +21,8 @@ class ProfileScreen extends ConsumerWidget {
     final access = ref.watch(accessProvider);
     final daysLeft = ref.watch(trialDaysLeftProvider);
     final remindersEnabled = ref.watch(remindersEnabledProvider);
+    final businessName = ref.watch(businessNameProvider);
+    final paymentLink = ref.watch(paymentLinkProvider);
 
     final subscribed = access == AccessStatus.subscribed;
     final subStatusLine = switch (access) {
@@ -161,6 +163,46 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
+                    const Icon(Icons.receipt_long_outlined, color: kForge),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Business & payments',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => _editBusinessInfo(context, ref),
+                      child: const Text('Edit'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  businessName.isEmpty
+                      ? 'Add your business name'
+                      : businessName,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                Text(
+                  paymentLink.isEmpty
+                      ? 'Add a Venmo/Stripe payment link for invoices'
+                      : paymentLink,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
                     const Icon(Icons.workspace_premium_outlined, color: kForge),
                     const SizedBox(width: 12),
                     Text(
@@ -205,4 +247,51 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _editBusinessInfo(BuildContext context, WidgetRef ref) async {
+  final nameCtrl = TextEditingController(text: ref.read(businessNameProvider));
+  final linkCtrl = TextEditingController(text: ref.read(paymentLinkProvider));
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Business & payments'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nameCtrl,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Business name'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: linkCtrl,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            decoration: const InputDecoration(
+              labelText: 'Payment link',
+              hintText: 'venmo.com/u/… or a Stripe link',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+  if (saved == true) {
+    await ref.read(businessNameProvider.notifier).set(nameCtrl.text);
+    await ref.read(paymentLinkProvider.notifier).set(linkCtrl.text);
+  }
+  nameCtrl.dispose();
+  linkCtrl.dispose();
 }
