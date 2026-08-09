@@ -6,6 +6,7 @@ import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
+import 'package:shoein/core/services/notification_service.dart';
 import 'package:shoein/core/services/subscription_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
@@ -19,6 +20,7 @@ class ProfileScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final access = ref.watch(accessProvider);
     final daysLeft = ref.watch(trialDaysLeftProvider);
+    final remindersEnabled = ref.watch(remindersEnabledProvider);
 
     final subscribed = access == AccessStatus.subscribed;
     final subStatusLine = switch (access) {
@@ -136,6 +138,20 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: SwitchListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              title: const Text('Trim reminders'),
+              subtitle: const Text('A reminder when a horse is due for a trim'),
+              value: remindersEnabled,
+              onChanged: (v) async {
+                await ref.read(remindersEnabledProvider.notifier).set(v);
+                if (v) await NotificationService.instance.requestPermission();
+              },
             ),
           ),
           const SizedBox(height: 16),

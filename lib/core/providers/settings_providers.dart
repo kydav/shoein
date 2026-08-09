@@ -75,3 +75,21 @@ class MapStyleNotifier extends Notifier<MapStyle> {
 final mapStyleNameProvider = NotifierProvider<MapStyleNotifier, MapStyle>(
   MapStyleNotifier.new,
 );
+
+// ─── Trim reminders on/off, persisted ────────────────────────────────────────
+class RemindersEnabledNotifier extends Notifier<bool> {
+  static const _key = 'reminders_enabled';
+
+  @override
+  bool build() => ref.read(sharedPreferencesProvider).getBool(_key) ?? true;
+
+  Future<void> set(bool value) async {
+    state = value;
+    await ref.read(sharedPreferencesProvider).setBool(_key, value);
+  }
+}
+
+final remindersEnabledProvider =
+    NotifierProvider<RemindersEnabledNotifier, bool>(
+      RemindersEnabledNotifier.new,
+    );
