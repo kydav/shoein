@@ -24,13 +24,13 @@ it returns no ID token.
    each SHA-1/SHA-256.
 3. **Re-download `google-services.json`** and replace `android/app/google-services.json`.
    (This populates the `oauth_client` block that's currently empty.)
-4. Provide the **Web client ID** to the app as a dart-define named
-   `GOOGLE_SERVER_CLIENT_ID` (it's read by `lib/core/config/auth_config.dart`):
-   - Local: add `GOOGLE_SERVER_CLIENT_ID=xxxx.apps.googleusercontent.com` to
-     `.env` (you already run with `--dart-define-from-file=.env`).
-   - CI: add it as a GitHub secret and pass `--dart-define=GOOGLE_SERVER_CLIENT_ID=...`
-     in the Android build step. **Without it, Google sign-in on Android will fail
-     to return a token** (iOS is fine without it).
+4. The **Web client ID** (the `client_type: 3` entry in google-services.json) is
+   what Android needs as `serverClientId` to mint an ID token Firebase accepts.
+   It's now **hardcoded as the default** in `lib/core/config/auth_config.dart`
+   (client IDs aren't secrets — they ship in google-services.json anyway), so no
+   build flag is required. If you ever rotate it or point at a different Firebase
+   project, either update that default or override it with a
+   `--dart-define=GOOGLE_SERVER_CLIENT_ID=…`.
 
 ## 3. iOS — Google
 1. After enabling Google in Firebase, **re-download `GoogleService-Info.plist`**

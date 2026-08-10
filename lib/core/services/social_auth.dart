@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -54,6 +55,7 @@ class SocialAuth {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         throw const SocialSignInCancelled();
       }
+      debugPrint('Google sign-in failed: ${e.code} — ${e.description}');
       rethrow;
     }
   }
