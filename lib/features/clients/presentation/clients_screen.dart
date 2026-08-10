@@ -9,6 +9,19 @@ import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 import 'package:shoein/features/subscription/presentation/access_banner.dart';
 
+class _KeyboardVisibilityObserver extends WidgetsBindingObserver {
+  _KeyboardVisibilityObserver(this.onChanged);
+
+  final ValueChanged<bool> onChanged;
+
+  @override
+  void didChangeMetrics() {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    final bottomInset = view.viewInsets.bottom;
+    onChanged(bottomInset > 0);
+  }
+}
+
 class ClientsScreen extends HookConsumerWidget {
   const ClientsScreen({super.key});
 
@@ -17,80 +30,103 @@ class ClientsScreen extends HookConsumerWidget {
     final clientsAsync = ref.watch(clientsProvider);
     final readOnly = ref.watch(isReadOnlyProvider);
     final query = useState('');
+    final isKeyboardVisible = useState(false);
+
+    useEffect(() {
+      final observer = _KeyboardVisibilityObserver((visible) {
+        isKeyboardVisible.value = visible;
+      });
+
+      WidgetsBinding.instance.addObserver(observer);
+      WidgetsBinding.instance.handleMetricsChanged();
+
+      return () => WidgetsBinding.instance.removeObserver(observer);
+    }, const []);
+
+    final shouldShowFab = !isKeyboardVisible.value;
 
     void addClient() => context.push(readOnly ? '/paywall' : '/clients/new');
     return Scaffold(
       appBar: AppBar(title: const Text('Clients')),
-      resizeToAvoidBottomInset: false,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 125.0),
-        child: FloatingActionButton.extended(
-          onPressed: addClient,
-          icon: Icon(readOnly ? Icons.lock_outline_rounded : Icons.add),
-          label: const Text('Client'),
-        ),
-      ),
-      body: Column(
-        children: [
-          const AccessBanner(),
-          Expanded(
-            child: clientsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
-              data: (all) {
-                final clients = query.value.isEmpty
-                    ? all
-                    : all
-                          .where(
-                            (c) => c.name.toLowerCase().contains(
-                              query.value.toLowerCase(),
-                            ),
-                          )
-                          .toList();
-                if (all.isEmpty) {
-                  return EmptyState(
-                    icon: Icons.people_alt_outlined,
-                    title: 'No clients yet',
-                    message:
-                        'Add your first client to start tracking their horses and service schedule.',
-                    action: FilledButton.icon(
-                      onPressed: addClient,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add client'),
-                    ),
-                  );
-                }
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                  children: [
-                    TextField(
-                      onChanged: (v) => query.value = v,
-                      decoration: const InputDecoration(
-                        hintText: 'Search clients',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    for (final c in clients) ...[
-                      _ClientTile(client: c),
-                      const SizedBox(height: 10),
-                    ],
-                    if (clients.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 40),
-                        child: Text(
-                          'No clients match "${query.value}".',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: context.colors.textSecondary),
+      resizeToAvoidBottomInset: true,
+      floatingActionButton: shouldShowFab
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 125.0),
+              child: FloatingActionButton.extended(
+                onPressed: addClient,
+                icon: Icon(readOnly ? Icons.lock_outline_rounded : Icons.add),
+                label: const Text('Client'),
+              ),
+            )
+          : null,
+      body: Builder(
+        builder: (context) {
+          return Column(
+            children: [
+              const AccessBanner(),
+              Expanded(
+                child: clientsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                  data: (all) {
+                    final clients = query.value.isEmpty
+                        ? all
+                        : all
+                              .where(
+                                (c) => c.name.toLowerCase().contains(
+                                  query.value.toLowerCase(),
+                                ),
+                              )
+                              .toList();
+                    if (all.isEmpty) {
+                      return EmptyState(
+                        icon: Icons.people_alt_outlined,
+                        title: 'No clients yet',
+                        message:
+                            'Add your first client to start tracking their horses and service schedule.',
+                        action: FilledButton.icon(
+                          onPressed: addClient,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add client'),
                         ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+                      );
+                    }
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                      children: [
+                        TextField(
+                          onChanged: (v) => query.value = v,
+                          decoration: const InputDecoration(
+                            hintText: 'Search clients',
+                            prefixIcon: Icon(Icons.search),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        for (final c in clients) ...[
+                          _ClientTile(client: c),
+                          const SizedBox(height: 10),
+                        ],
+                        if (clients.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 40),
+                            child: Text(
+                              'No clients match "${query.value}".',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: context.colors.textSecondary,
+                                  ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
