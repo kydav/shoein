@@ -2,7 +2,8 @@
 
 Everything you paste into App Store Connect / Google Play Console. Copy is
 written to the current feature set: dashboard, trim-cycle reminders, visit log +
-history, scheduling + calendar, invoicing, route optimizer, and hoof photos.
+history, scheduling + calendar, invoicing, route optimizer, hoof photos, and an
+earnings dashboard.
 
 ---
 
@@ -17,7 +18,7 @@ history, scheduling + calendar, invoicing, route optimizer, and hoof photos.
 
 ### Keywords (App Store, ≤100 chars, comma-separated, no spaces)
 ```
-farrier,horseshoe,trim,hoof,equine,horse,shoeing,barefoot,client manager,scheduling
+farrier,horseshoe,trim,hoof,equine,horse,shoeing,barefoot,invoice,scheduling
 ```
 
 ---
@@ -57,6 +58,10 @@ farrier,horseshoe,trim,hoof,equine,horse,shoeing,barefoot,client manager,schedul
 > Log a cost as paid on the spot, or send a clean invoice by text or email with
 > your own payment link (Venmo, Stripe, whatever you use).
 >
+> **See your income**
+> An earnings dashboard shows what you've made this month and year, what's still
+> outstanding, a six-month income trend, and your top clients — no spreadsheets.
+>
 > **Your data, protected**
 > Everything is tied to your account and synced securely. Sign in with email,
 > Google, or Apple.
@@ -84,7 +89,8 @@ Terms of Use: https://auaha.app/shoein/terms
 ```
 First release of Shoein' — the trim-cycle manager for farriers. Track clients
 and horses, see who's due, log visits with photos, schedule appointments,
-optimize your route, and send invoices. Thanks for trying it!
+optimize your route, send invoices, and watch your earnings. Thanks for trying
+it!
 ```
 
 ---
