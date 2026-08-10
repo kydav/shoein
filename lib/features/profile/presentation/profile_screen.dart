@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
@@ -23,6 +24,8 @@ class ProfileScreen extends ConsumerWidget {
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final businessName = ref.watch(businessNameProvider);
     final paymentLink = ref.watch(paymentLinkProvider);
+    final earnings = ref.watch(earningsProvider);
+    final money = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
 
     final subscribed = access == AccessStatus.subscribed;
     final subStatusLine = switch (access) {
@@ -102,6 +105,38 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   '${clients.length} ${clients.length == 1 ? 'client' : 'clients'}',
                   style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            onTap: () => context.push('/earnings'),
+            child: Row(
+              children: [
+                const Icon(Icons.bar_chart_rounded, color: kForge),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Earnings',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        '${money.format(earnings.thisMonthPaid)} this month'
+                        '${earnings.outstanding > 0 ? ' · ${money.format(earnings.outstanding)} unpaid' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.colors.textSecondary,
                 ),
               ],
             ),

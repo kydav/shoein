@@ -7,6 +7,7 @@ import 'package:shoein/features/clients/presentation/client_detail_screen.dart';
 import 'package:shoein/features/clients/presentation/client_form_screen.dart';
 import 'package:shoein/features/clients/presentation/clients_screen.dart';
 import 'package:shoein/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:shoein/features/earnings/presentation/earnings_screen.dart';
 import 'package:shoein/features/invoicing/presentation/invoice_screen.dart';
 import 'package:shoein/features/horses/presentation/horse_form_screen.dart';
 import 'package:shoein/features/map/presentation/map_screen.dart';
@@ -32,6 +33,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
       GoRoute(path: '/paywall', builder: (c, s) => const PaywallScreen()),
       GoRoute(path: '/route', builder: (c, s) => const RoutePlannerScreen()),
+      GoRoute(path: '/earnings', builder: (c, s) => const EarningsScreen()),
       GoRoute(
         path: '/schedule/new',
         builder: (c, s) {

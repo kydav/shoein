@@ -78,6 +78,7 @@ dependencies:
   firebase_storage: ^13.4.6
   # Runtime API (preserve/remove) is called from main.dart, so it lives here.
   flutter_native_splash: ^2.4.6
+  fl_chart: ^0.69.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
