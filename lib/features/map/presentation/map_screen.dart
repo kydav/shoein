@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -28,6 +29,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final Map<String, String> _annToClient = {};
   final Map<String, Uint8List> _chipCache = {};
   List<Client> _located = const [];
+  bool _locating = false;
 
   // Chip scale factor — render at 3× and shrink with iconSize for a crisp label.
   static const double _chipScale = 3.0;
@@ -173,6 +175,49 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  Future<void> _goToCurrentLocation() async {
+    setState(() => _locating = true);
+    try {
+      var permission = await geo.Geolocator.checkPermission();
+      if (permission == geo.LocationPermission.denied) {
+        permission = await geo.Geolocator.requestPermission();
+      }
+      if (permission == geo.LocationPermission.deniedForever ||
+          permission == geo.LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permission is required')),
+          );
+        }
+        return;
+      }
+      final pos = await geo.Geolocator.getCurrentPosition(
+        locationSettings: const geo.LocationSettings(
+          accuracy: geo.LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      final map = _map;
+      if (map != null && mounted) {
+        await map.flyTo(
+          CameraOptions(
+            center: Point(coordinates: Position(pos.longitude, pos.latitude)),
+            zoom: 15,
+          ),
+          MapAnimationOptions(duration: 1000),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not get current location')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final clientsAsync = ref.watch(clientsProvider);
@@ -208,6 +253,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               tooltip: 'Map style',
               onPressed: _showStyleSheet,
             ),
+            const SizedBox(height: 10),
+            _MapIconButton(
+              icon: Icons.my_location,
+
+              tooltip: 'Center map',
+              onPressed: _locating ? null : _goToCurrentLocation,
+            ),
           ],
         ),
       ),
@@ -242,7 +294,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 class _MapIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   const _MapIconButton({
     required this.icon,
     required this.tooltip,
