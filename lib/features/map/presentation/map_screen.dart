@@ -256,7 +256,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             const SizedBox(height: 10),
             _MapIconButton(
               icon: Icons.my_location,
-
               tooltip: 'Center map',
               onPressed: _locating ? null : _goToCurrentLocation,
             ),
