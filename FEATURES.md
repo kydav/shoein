@@ -81,6 +81,8 @@ invoicing / payment tracking, day/route map view, earnings summary.
   summary + pay link), **Preview** (`printing`), and **Mark paid**.
 - PDF built with the `pdf` package: business header, line items, total, and a
   clickable "Pay online" link.
+- **Card payments roadmap** (Stripe Connect + Cloud Functions for enforced
+  amounts) is documented separately in [PAYMENTS.md](PAYMENTS.md).
 
 ## Route planner  ✅ (built)
 
