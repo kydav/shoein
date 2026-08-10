@@ -46,6 +46,24 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: Prepare CocoaPods (resilient to intermittent CDN failures)
+        # macos-latest (CocoaPods 1.17 + Ruby 3.4 / OpenSSL 3) intermittently
+        # dies with "Couldn't determine repo type for URL … unexpected EOF" the
+        # first time a cold runner reaches the CocoaPods CDN. Generate the Xcode
+        # config, then retry `pod install` (the CDN-contacting step) until the
+        # trunk cache is warm, so the expensive IPA build below never hits it.
+        run: |
+          flutter build ios --config-only --release --no-codesign || true
+          cd ios
+          for i in 1 2 3 4 5; do
+            pod install --repo-update && exit 0
+            echo "::warning::pod install failed (attempt $i) — clearing trunk cache, retrying in $((i*10))s"
+            rm -rf ~/.cocoapods/repos/trunk
+            sleep $((i * 10))
+          done
+          echo "::error::pod install failed after 5 attempts"
+          exit 1
+
       - name: Restore Firebase config
         env:
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
