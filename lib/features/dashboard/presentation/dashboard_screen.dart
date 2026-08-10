@@ -34,26 +34,43 @@ class DashboardScreen extends ConsumerWidget {
         upcoming.isEmpty &&
         needsDate.isEmpty;
 
+    Future<void> refresh() async {
+      // Re-subscribe the live streams that feed the dashboard.
+      ref.invalidate(clientsProvider);
+      ref.invalidate(horsesProvider);
+      ref.invalidate(appointmentsProvider);
+      // Hold the spinner until clients re-emit (from cache, so it's quick).
+      try {
+        await ref.read(clientsProvider.future);
+      } catch (_) {}
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Today')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 120),
-        children: [
-          const AccessBanner(),
-          const _TodayAppointments(),
-          if (nothingToShow)
-            _EmptyState(hasClients: hasClients)
-          else ...[
-            _Section(title: 'Overdue', accent: kOverdueRed, items: overdue),
-            _Section(title: 'Due this week', accent: kForge, items: thisWeek),
-            _Section(title: 'Coming up', accent: kForge, items: upcoming),
-            _Section(
-              title: 'Needs a service date',
-              accent: kTextSecondary,
-              items: needsDate,
-            ),
+      body: RefreshIndicator(
+        onRefresh: refresh,
+        child: ListView(
+          // Always scrollable so pull-to-refresh works even when the list is
+          // short (e.g. the empty state).
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 120),
+          children: [
+            const AccessBanner(),
+            const _TodayAppointments(),
+            if (nothingToShow)
+              _EmptyState(hasClients: hasClients)
+            else ...[
+              _Section(title: 'Overdue', accent: kOverdueRed, items: overdue),
+              _Section(title: 'Due this week', accent: kForge, items: thisWeek),
+              _Section(title: 'Coming up', accent: kForge, items: upcoming),
+              _Section(
+                title: 'Needs a service date',
+                accent: kTextSecondary,
+                items: needsDate,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
