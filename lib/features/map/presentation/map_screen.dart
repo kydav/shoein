@@ -109,6 +109,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
     await _addPins();
     await _fitCamera();
+    // Restore the location puck across style switches if we already have
+    // permission — without prompting on a fresh map open.
+    final perm = await geo.Geolocator.checkPermission();
+    if (perm == geo.LocationPermission.whileInUse ||
+        perm == geo.LocationPermission.always) {
+      await _enableLocationPuck();
+    }
+  }
+
+  /// Turns on Mapbox's built-in location puck (the live blue dot).
+  Future<void> _enableLocationPuck() async {
+    try {
+      await _map?.location.updateSettings(
+        LocationComponentSettings(enabled: true, pulsingEnabled: true),
+      );
+    } catch (_) {}
   }
 
   Future<void> _addPins() async {
@@ -191,6 +207,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         }
         return;
       }
+      // Show the live location puck now that permission is granted.
+      await _enableLocationPuck();
       final pos = await geo.Geolocator.getCurrentPosition(
         locationSettings: const geo.LocationSettings(
           accuracy: geo.LocationAccuracy.high,
