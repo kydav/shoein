@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,12 +15,15 @@ import 'package:shoein/core/services/subscription_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  // Hold the native splash on screen while we init Firebase, RevenueCat, etc.
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
   await bootstrapFirebase();
   await configureRevenueCat();
   MapboxOptions.setAccessToken(kMapboxAccessToken);
   await NotificationService.instance.init();
   final prefs = await SharedPreferences.getInstance();
+  FlutterNativeSplash.remove();
   runApp(
     ProviderScope(
       overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],

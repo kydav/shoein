@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shoein/core/providers/auth_provider.dart';
+import 'package:shoein/core/services/firebase_bootstrap.dart';
 
 /// Overridden in `main` with the loaded instance.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -94,23 +97,71 @@ final remindersEnabledProvider =
       RemindersEnabledNotifier.new,
     );
 
-// ─── Invoicing: business name + one payment link, persisted ───────────────────
-class _StringPref extends FamilyNotifier<String, String> {
-  @override
-  String build(String key) =>
-      ref.read(sharedPreferencesProvider).getString(key) ?? '';
+// ─── Invoicing: business name + one payment link ─────────────────────────────
+// Stored on the user's Firestore doc (`users/{uid}`) so they follow the account
+// across devices. A local copy is kept in SharedPreferences as an offline cache
+// (and the demo-mode / signed-out fallback).
 
-  Future<void> set(String value) async {
-    state = value;
-    await ref.read(sharedPreferencesProvider).setString(arg, value.trim());
-  }
+const _kBusinessNameKey = 'business_name';
+const _kPaymentLinkKey = 'payment_link';
+
+class BusinessSettings {
+  final String businessName;
+  final String paymentLink;
+  const BusinessSettings({this.businessName = '', this.paymentLink = ''});
 }
 
-final _stringPrefProvider =
-    NotifierProvider.family<_StringPref, String, String>(_StringPref.new);
+/// Live business/payment settings, synced from the user's Firestore doc.
+/// Falls back to on-device prefs in demo mode or before sign-in.
+final businessSettingsProvider = StreamProvider<BusinessSettings>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  BusinessSettings fromPrefs() => BusinessSettings(
+    businessName: prefs.getString(_kBusinessNameKey) ?? '',
+    paymentLink: prefs.getString(_kPaymentLinkKey) ?? '',
+  );
 
-/// Business name shown on invoices.
-final businessNameProvider = _stringPrefProvider('business_name');
+  if (!firebaseReady) return Stream.value(fromPrefs());
+  final uid = ref.watch(authNotifierProvider).uid;
+  if (uid.isEmpty) return Stream.value(fromPrefs());
+
+  final doc = FirebaseFirestore.instance.collection('users').doc(uid);
+  return doc.snapshots().map((snap) {
+    final d = snap.data();
+    return BusinessSettings(
+      businessName: (d?['businessName'] as String?) ?? '',
+      paymentLink: (d?['paymentLink'] as String?) ?? '',
+    );
+  });
+});
+
+/// Business name shown on invoices (empty until the profile loads).
+final businessNameProvider = Provider<String>(
+  (ref) => ref.watch(businessSettingsProvider).valueOrNull?.businessName ?? '',
+);
 
 /// The single Venmo/Stripe/PayPal payment link put on every invoice.
-final paymentLinkProvider = _stringPrefProvider('payment_link');
+final paymentLinkProvider = Provider<String>(
+  (ref) => ref.watch(businessSettingsProvider).valueOrNull?.paymentLink ?? '',
+);
+
+/// Persist business/payment settings — to the user's Firestore doc when signed
+/// in, and always to the local prefs cache (offline + demo fallback).
+Future<void> saveBusinessSettings(
+  WidgetRef ref, {
+  required String businessName,
+  required String paymentLink,
+}) async {
+  final name = businessName.trim();
+  final link = paymentLink.trim();
+  final prefs = ref.read(sharedPreferencesProvider);
+  await prefs.setString(_kBusinessNameKey, name);
+  await prefs.setString(_kPaymentLinkKey, link);
+
+  if (!firebaseReady) return;
+  final uid = ref.read(authNotifierProvider).uid;
+  if (uid.isEmpty) return;
+  await FirebaseFirestore.instance.collection('users').doc(uid).set({
+    'businessName': name,
+    'paymentLink': link,
+  }, SetOptions(merge: true));
+}

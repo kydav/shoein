@@ -2,7 +2,7 @@ name: shoein
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -46,6 +46,11 @@ dependencies:
   firebase_auth: ^6.5.4
   cloud_firestore: ^6.6.0
 
+  # Social sign-in (Google + Apple)
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.6
+
   # Address geocoding (maps are Mapbox — see mapbox_maps_flutter below)
   geocoding: ^4.0.0
 
@@ -71,6 +76,8 @@ dependencies:
   path_provider: ^2.1.6
   image_picker: ^1.2.3
   firebase_storage: ^13.4.6
+  # Runtime API (preserve/remove) is called from main.dart, so it lives here.
+  flutter_native_splash: ^2.4.6
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -90,19 +97,45 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon.png"
+  # iOS 18 icon appearances:
+  #   • Light (default): horseshoe + glow on warm off-white (kBgPage).
+  #   • Dark: the original forge-brown icon.
+  #   • Tinted: the glowing horseshoe, desaturated by the tool.
+  image_path: "assets/icon/icon_light.png"
+  image_path_ios_dark_transparent: "assets/icon/icon.png"
+  image_path_ios_tinted_grayscale: "assets/icon/icon_tinted.png"
+  desaturate_tinted_to_grayscale_ios: true
   remove_alpha_ios: true
-  adaptive_icon_background: "assets/icon/background.png"
+  # Android has a single launcher icon (no light/dark swap) — keep the light
+  # look: horseshoe + glow on the warm off-white. Monochrome drives themed icons.
+  adaptive_icon_background: "#F7F4EF"
   adaptive_icon_foreground: "assets/icon/foreground.png"
   adaptive_icon_monochrome: "assets/icon/monochrome.png"
   min_sdk_android: 21
+
+# Launch splash — light/dark aware:
+#   • Light: the clean (glow-stripped) mark on warm off-white (kBgPage).
+#   • Dark:  the glowing mark on forge charcoal (kAnvil), matching the login hero.
+# Regenerate after edits with:  dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#F7F4EF"
+  image: assets/logo/shoein_mark_flat.png
+  color_dark: "#2B2A28"
+  image_dark: assets/logo/shoein_mark.png
+  android_12:
+    color: "#F7F4EF"
+    image: assets/logo/shoein_mark_flat.png
+    color_dark: "#2B2A28"
+    image_dark: assets/logo/shoein_mark.png
+  android: true
+  ios: true
+  web: false
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -111,6 +144,7 @@ flutter:
   assets:
     - assets/logo/
     - assets/map/
+    - assets/icon/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

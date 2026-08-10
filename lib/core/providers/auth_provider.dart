@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shoein/core/services/firebase_bootstrap.dart';
+import 'package:shoein/core/services/social_auth.dart';
 
 /// Auth state. Backed by Firebase Auth when configured; otherwise a local demo
 /// session so the app is fully usable before `flutterfire configure`.
@@ -73,6 +74,39 @@ class AuthNotifier extends ChangeNotifier {
     );
     if (name != null && name.trim().isNotEmpty) {
       await cred.user?.updateDisplayName(name.trim());
+    }
+    notifyListeners();
+  }
+
+  /// Sign in with Google. Throws [SocialSignInCancelled] if the user backs out.
+  Future<void> signInWithGoogle() async {
+    if (!firebaseReady) {
+      _demoLoggedIn = true;
+      _demoEmail = 'demo@google.com';
+      _demoName = 'Google Demo';
+      notifyListeners();
+      return;
+    }
+    final credential = await SocialAuth.googleCredential();
+    await _auth!.signInWithCredential(credential);
+    notifyListeners();
+  }
+
+  /// Sign in with Apple. Throws [SocialSignInCancelled] if the user backs out.
+  Future<void> signInWithApple() async {
+    if (!firebaseReady) {
+      _demoLoggedIn = true;
+      _demoEmail = 'demo@icloud.com';
+      _demoName = 'Apple Demo';
+      notifyListeners();
+      return;
+    }
+    final result = await SocialAuth.appleCredential();
+    final cred = await _auth!.signInWithCredential(result.credential);
+    // Apple only sends the name once; persist it if Firebase doesn't have it.
+    final name = result.displayName;
+    if (name != null && (cred.user?.displayName?.isEmpty ?? true)) {
+      await cred.user?.updateDisplayName(name);
     }
     notifyListeners();
   }

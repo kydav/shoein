@@ -289,8 +289,11 @@ Future<void> _editBusinessInfo(BuildContext context, WidgetRef ref) async {
     ),
   );
   if (saved == true) {
-    await ref.read(businessNameProvider.notifier).set(nameCtrl.text);
-    await ref.read(paymentLinkProvider.notifier).set(linkCtrl.text);
+    await saveBusinessSettings(
+      ref,
+      businessName: nameCtrl.text,
+      paymentLink: linkCtrl.text,
+    );
   }
   nameCtrl.dispose();
   linkCtrl.dispose();

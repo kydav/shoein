@@ -338,7 +338,12 @@ class _HorseTile extends StatelessWidget {
               color: kForge.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.pets, color: kForge),
+            child: Image.asset(
+              'assets/icon/horse-head-icon.png',
+              width: 20,
+              height: 20,
+              color: kForge,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

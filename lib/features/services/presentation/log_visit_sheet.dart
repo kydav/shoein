@@ -22,6 +22,7 @@ Future<void> showLogVisitSheet(
 }) {
   return showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: context.colors.surface,
     shape: const RoundedRectangleBorder(
@@ -132,161 +133,169 @@ class _LogVisitSheetState extends ConsumerState<_LogVisitSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        14,
-        20,
-        20 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.colors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Log visit — ${widget.horse.name}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Text('Date', style: Theme.of(context).textTheme.labelMedium),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: _pickDate,
-                icon: const Icon(Icons.event_outlined, size: 18),
-                label: Text(DateFormat.yMMMMd().format(_date)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text('Work', style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final w in _workTypes)
-                ChoiceChip(
-                  label: Text(w),
-                  selected: _workType == w,
-                  onSelected: (_) => setState(() => _workType = w),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          14,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.colors.border,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _cost,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-            ],
-            decoration: const InputDecoration(
-              labelText: 'Cost (optional)',
-              prefixText: '\$',
+              ),
             ),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Paid'),
-            subtitle: const Text(
-              'Paid on the spot — keep off to invoice later',
+            const SizedBox(height: 16),
+            Text(
+              'Log visit — ${widget.horse.name}',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            value: _paid,
-            onChanged: (v) => setState(() => _paid = v),
-          ),
-          const SizedBox(height: 4),
-          TextField(
-            controller: _notes,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Notes (optional)',
-              hintText: 'What you did, anything to watch…',
-            ),
-          ),
-          if (firebaseReady) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Text('Photos', style: Theme.of(context).textTheme.labelMedium),
+                Text('Date', style: Theme.of(context).textTheme.labelMedium),
                 const Spacer(),
-                IconButton(
-                  tooltip: 'Take photo',
-                  onPressed: _uploading
-                      ? null
-                      : () => _addPhoto(ImageSource.camera),
-                  icon: const Icon(Icons.photo_camera_outlined),
-                ),
-                IconButton(
-                  tooltip: 'Choose photo',
-                  onPressed: _uploading
-                      ? null
-                      : () => _addPhoto(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library_outlined),
+                TextButton.icon(
+                  onPressed: _pickDate,
+                  icon: const Icon(Icons.event_outlined, size: 18),
+                  label: Text(DateFormat.yMMMMd().format(_date)),
                 ),
               ],
             ),
-            if (_uploading) const LinearProgressIndicator(),
-            if (_photos.isNotEmpty)
-              SizedBox(
-                height: 76,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _photos.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (_, i) => Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          _photos[i],
-                          width: 76,
-                          height: 76,
-                          fit: BoxFit.cover,
+            const SizedBox(height: 8),
+            Text('Work', style: Theme.of(context).textTheme.labelMedium),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final w in _workTypes)
+                  ChoiceChip(
+                    label: Text(w),
+                    selected: _workType == w,
+                    onSelected: (_) => setState(() => _workType = w),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _cost,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'Cost (optional)',
+                prefixText: '\$',
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Paid'),
+              subtitle: const Text(
+                'Paid on the spot — keep off to invoice later',
+              ),
+              value: _paid,
+              onChanged: (v) => setState(() => _paid = v),
+            ),
+            const SizedBox(height: 4),
+            TextField(
+              controller: _notes,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Notes (optional)',
+                hintText: 'What you did, anything to watch…',
+              ),
+            ),
+            if (firebaseReady) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Text(
+                    'Photos',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Take photo',
+                    onPressed: _uploading
+                        ? null
+                        : () => _addPhoto(ImageSource.camera),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                  ),
+                  IconButton(
+                    tooltip: 'Choose photo',
+                    onPressed: _uploading
+                        ? null
+                        : () => _addPhoto(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                  ),
+                ],
+              ),
+              if (_uploading) const LinearProgressIndicator(),
+              if (_photos.isNotEmpty)
+                SizedBox(
+                  height: 76,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _photos.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) => Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            _photos[i],
+                            width: 76,
+                            height: 76,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      Positioned(
-                        top: -6,
-                        right: -6,
-                        child: IconButton(
-                          icon: const Icon(Icons.cancel, size: 20),
-                          color: kAnvil,
-                          onPressed: () => setState(() => _photos.removeAt(i)),
+                        Positioned(
+                          top: -6,
+                          right: -6,
+                          child: IconButton(
+                            icon: const Icon(Icons.cancel, size: 20),
+                            color: kAnvil,
+                            onPressed: () =>
+                                setState(() => _photos.removeAt(i)),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
+            ],
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: _busy ? null : _save,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
               ),
-          ],
-          const SizedBox(height: 18),
-          FilledButton(
-            onPressed: _busy ? null : _save,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
+              child: _busy
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Save visit'),
             ),
-            child: _busy
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Save visit'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

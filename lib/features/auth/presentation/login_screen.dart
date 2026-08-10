@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/services/firebase_bootstrap.dart';
+import 'package:shoein/core/services/social_auth.dart';
 import 'package:shoein/core/theme/app_theme.dart';
 
 /// Turns raw auth exceptions into short, friendly messages for end users.
@@ -78,6 +83,20 @@ class LoginScreen extends HookConsumerWidget {
         // disposing this screen — so we don't reset `busy` here.
       } catch (e) {
         error.value = friendlyAuthError(e, isSignUp: isSignUp.value);
+        busy.value = false;
+      }
+    }
+
+    Future<void> social(Future<void> Function() run) async {
+      busy.value = true;
+      error.value = null;
+      try {
+        await run();
+        // Auth state change navigates away; leave `busy` set.
+      } on SocialSignInCancelled {
+        busy.value = false; // user backed out — no error message
+      } catch (e) {
+        error.value = friendlyAuthError(e, isSignUp: false);
         busy.value = false;
       }
     }
@@ -202,6 +221,32 @@ class LoginScreen extends HookConsumerWidget {
                                   : 'New here? Create an account',
                             ),
                           ),
+                          const _OrDivider(),
+                          const SizedBox(height: 14),
+                          _GoogleButton(
+                            onPressed: busy.value
+                                ? null
+                                : () => social(
+                                    ref
+                                        .read(authNotifierProvider)
+                                        .signInWithGoogle,
+                                  ),
+                          ),
+                          if (!kIsWeb &&
+                              (Platform.isIOS || Platform.isMacOS)) ...[
+                            const SizedBox(height: 10),
+                            SignInWithAppleButton(
+                              height: 48,
+                              borderRadius: BorderRadius.circular(12),
+                              onPressed: busy.value
+                                  ? () {}
+                                  : () => social(
+                                      ref
+                                          .read(authNotifierProvider)
+                                          .signInWithApple,
+                                    ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -220,6 +265,70 @@ class LoginScreen extends HookConsumerWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "or" separator between email/password and the social buttons.
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final line = Expanded(
+      child: Divider(color: Colors.black.withValues(alpha: 0.12)),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          line,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              'or',
+              style: TextStyle(
+                color: Colors.black.withValues(alpha: 0.45),
+                fontSize: 12,
+              ),
+            ),
+          ),
+          line,
+        ],
+      ),
+    );
+  }
+}
+
+/// White "Continue with Google" button following Google's branding (white
+/// background, the multi-color G mark, Roboto-ish medium label).
+class _GoogleButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  const _GoogleButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Image.asset(
+          'assets/logo/google_g.png',
+          width: 20,
+          height: 20,
+          filterQuality: FilterQuality.medium,
+        ),
+        label: const Text('Continue with Google'),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF1F1F1F),
+          side: BorderSide(color: Colors.black.withValues(alpha: 0.2)),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
