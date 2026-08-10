@@ -136,7 +136,9 @@ class _ApptTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: SoftCard(
-        onTap: () => context.push('/schedule/${appointment.id}/edit'),
+        // Tapping the card jumps straight to the client so the farrier has the
+        // address, phone, and horses for the appointment in one tap.
+        onTap: () => context.push('/clients/${appointment.clientId}'),
         child: Row(
           children: [
             Column(
@@ -172,6 +174,11 @@ class _ApptTile extends StatelessWidget {
                     ),
                 ],
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: kForge),
+              tooltip: 'Edit appointment',
+              onPressed: () => context.push('/schedule/${appointment.id}/edit'),
             ),
             IconButton(
               icon: const Icon(Icons.event_available_outlined, color: kForge),

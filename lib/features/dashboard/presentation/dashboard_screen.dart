@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:shoein/core/models/appointment.dart';
 import 'package:shoein/core/models/horse.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/access_providers.dart';
@@ -38,6 +40,7 @@ class DashboardScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 120),
         children: [
           const AccessBanner(),
+          const _TodayAppointments(),
           if (nothingToShow)
             _EmptyState(hasClients: hasClients)
           else ...[
@@ -50,6 +53,110 @@ class DashboardScreen extends ConsumerWidget {
               items: needsDate,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Today's appointments, shown at the top of the dashboard when there are any.
+/// Each card opens the client so the farrier has address/phone/horses on hand.
+class _TodayAppointments extends ConsumerWidget {
+  const _TodayAppointments();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final all = ref.watch(appointmentsProvider).valueOrNull ?? const [];
+    final now = DateTime.now();
+    bool isToday(DateTime d) =>
+        d.year == now.year && d.month == now.month && d.day == now.day;
+    final today = all.where((a) => isToday(a.start)).toList()
+      ..sort((a, b) => a.start.compareTo(b.start));
+    if (today.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+          child: Row(
+            children: [
+              const Icon(Icons.today_outlined, size: 18, color: kForge),
+              const SizedBox(width: 6),
+              Text(
+                'Today',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(color: kForge),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${today.length}',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: kForge),
+              ),
+            ],
+          ),
+        ),
+        for (final a in today)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: _AppointmentRow(appointment: a),
+          ),
+      ],
+    );
+  }
+}
+
+class _AppointmentRow extends StatelessWidget {
+  final Appointment appointment;
+  const _AppointmentRow({required this.appointment});
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      onTap: () => context.push('/clients/${appointment.clientId}'),
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                DateFormat.jm().format(appointment.start),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: kForge),
+              ),
+              Text(
+                '${appointment.durationMinutes}m',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appointment.clientName,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (appointment.notes.isNotEmpty)
+                  Text(
+                    appointment.notes,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.colors.textSecondary,
+          ),
         ],
       ),
     );
