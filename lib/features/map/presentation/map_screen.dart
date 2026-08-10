@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -25,7 +26,62 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   PointAnnotationManager? _pins;
   Uint8List? _pinBytes;
   final Map<String, String> _annToClient = {};
+  final Map<String, Uint8List> _chipCache = {};
   List<Client> _located = const [];
+
+  // Chip scale factor — render at 3× and shrink with iconSize for a crisp label.
+  static const double _chipScale = 3.0;
+
+  /// A rounded "chip" label (client name) baked into a PNG so it's legible over
+  /// any map style. Cached per name.
+  Future<Uint8List> _chipBytes(String name) async {
+    final cached = _chipCache[name];
+    if (cached != null) return cached;
+    final tp = TextPainter(
+      text: TextSpan(
+        text: name,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12 * _chipScale,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: 150 * _chipScale);
+    const padH = 11 * _chipScale;
+    const padV = 6 * _chipScale;
+    final w = tp.width + padH * 2;
+    final h = tp.height + padV * 2;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final rect = Rect.fromLTWH(0, 0, w, h);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, Radius.circular(h / 2)),
+      Paint()..color = kAnvil.withValues(alpha: 0.92),
+    );
+    tp.paint(canvas, const Offset(padH, padV));
+    final img = await recorder.endRecording().toImage(w.ceil(), h.ceil());
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    final bytes = data!.buffer.asUint8List();
+    _chipCache[name] = bytes;
+    return bytes;
+  }
+
+  /// Initial viewport so the map opens already framed on the clients instead of
+  /// flashing the whole world before the style loads.
+  ViewportState? _initialViewport() {
+    if (_located.isEmpty) return null;
+    final lat =
+        _located.map((c) => c.lat!).reduce((a, b) => a + b) / _located.length;
+    final lng =
+        _located.map((c) => c.lng!).reduce((a, b) => a + b) / _located.length;
+    return CameraViewportState(
+      center: Point(coordinates: Position(lng, lat)),
+      zoom: _located.length == 1 ? 13 : 8.5,
+    );
+  }
 
   @override
   void initState() {
@@ -60,18 +116,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await pins.deleteAll();
     _annToClient.clear();
     for (final c in _located) {
-      final annotation = await pins.create(
+      final point = Point(coordinates: Position(c.lng!, c.lat!));
+      final pin = await pins.create(
         PointAnnotationOptions(
-          geometry: Point(coordinates: Position(c.lng!, c.lat!)),
+          geometry: point,
           image: bytes,
           iconSize: 0.55,
           iconAnchor: IconAnchor.BOTTOM,
-          textField: c.name,
-          textOffset: [0, 0.6],
-          textSize: 12,
         ),
       );
-      _annToClient[annotation.id] = c.id;
+      _annToClient[pin.id] = c.id;
+      // A readable name chip sitting just under the pin's tip.
+      final chip = await pins.create(
+        PointAnnotationOptions(
+          geometry: point,
+          image: await _chipBytes(c.name),
+          iconSize: 1 / _chipScale,
+          iconAnchor: IconAnchor.TOP,
+          iconOffset: [0, 10],
+        ),
+      );
+      _annToClient[chip.id] = c.id;
     }
   }
 
@@ -127,28 +192,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     return Scaffold(
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 125.0),
+        padding: const EdgeInsets.only(right: 4, bottom: 125.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            FloatingActionButton.extended(
-              heroTag: 'plan-route',
+            _MapIconButton(
+              icon: readOnly ? Icons.lock_outline_rounded : Icons.alt_route,
+              tooltip: 'Plan route',
               onPressed: () => context.push(readOnly ? '/paywall' : '/route'),
-              icon: Icon(
-                readOnly ? Icons.lock_outline_rounded : Icons.alt_route,
-              ),
-              label: const Text('Plan route'),
             ),
             const SizedBox(height: 10),
-            Material(
-              color: context.colors.surface,
-              shape: const CircleBorder(),
-              elevation: 3,
-              child: IconButton(
-                icon: const Icon(Icons.layers_outlined, color: kForge),
-                tooltip: 'Map style',
-                onPressed: _showStyleSheet,
-              ),
+            _MapIconButton(
+              icon: Icons.layers_outlined,
+              tooltip: 'Map style',
+              onPressed: _showStyleSheet,
             ),
           ],
         ),
@@ -168,11 +226,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           }
           return MapWidget(
             key: const ValueKey('clients-map'),
+            viewport: _initialViewport(),
             styleUri: style.styleUri,
             onMapCreated: _onMapCreated,
             onStyleLoadedListener: _onStyleLoaded,
           );
         },
+      ),
+    );
+  }
+}
+
+/// A circular map control button — the on-map style for both the route and
+/// map-style actions.
+class _MapIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  const _MapIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: context.colors.surface,
+      shape: const CircleBorder(),
+      elevation: 3,
+      child: IconButton(
+        icon: Icon(icon, color: kForge),
+        tooltip: tooltip,
+        onPressed: onPressed,
       ),
     );
   }

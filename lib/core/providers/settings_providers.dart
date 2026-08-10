@@ -97,6 +97,23 @@ final remindersEnabledProvider =
       RemindersEnabledNotifier.new,
     );
 
+// ─── First-run onboarding seen, persisted ────────────────────────────────────
+class OnboardingSeenNotifier extends Notifier<bool> {
+  static const _key = 'onboarding_seen';
+
+  @override
+  bool build() => ref.read(sharedPreferencesProvider).getBool(_key) ?? false;
+
+  Future<void> markSeen() async {
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_key, true);
+  }
+}
+
+final onboardingSeenProvider = NotifierProvider<OnboardingSeenNotifier, bool>(
+  OnboardingSeenNotifier.new,
+);
+
 // ─── Invoicing: business name + one payment link ─────────────────────────────
 // Stored on the user's Firestore doc (`users/{uid}`) so they follow the account
 // across devices. A local copy is kept in SharedPreferences as an offline cache

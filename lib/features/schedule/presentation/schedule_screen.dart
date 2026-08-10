@@ -89,9 +89,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           const Divider(height: 1),
           Expanded(
             child: dayAppts.isEmpty
-                ? Center(
+                ? Align(
+                    alignment: Alignment.topCenter,
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
                       child: Text(
                         'No appointments on ${DateFormat.MMMMd().format(_selectedDay)}.',
                         textAlign: TextAlign.center,

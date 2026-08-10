@@ -13,6 +13,7 @@ import 'package:shoein/core/services/firebase_bootstrap.dart';
 import 'package:shoein/core/services/notification_service.dart';
 import 'package:shoein/core/services/subscription_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
+import 'package:shoein/features/onboarding/presentation/onboarding_screen.dart';
 
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
@@ -37,8 +38,23 @@ class ShoeinApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+
+    // First launch: show the intro carousel before the app proper.
+    if (!ref.watch(onboardingSeenProvider)) {
+      return MaterialApp(
+        title: "Shoein'",
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
+        debugShowCheckedModeBanner: false,
+        home: OnboardingScreen(
+          onDone: () => ref.read(onboardingSeenProvider.notifier).markSeen(),
+        ),
+      );
+    }
+
+    final router = ref.watch(routerProvider);
 
     // Keep on-device trim reminders in sync with what's due + the toggle.
     ref.listen(dueHorsesProvider, (_, due) {

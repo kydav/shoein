@@ -91,7 +91,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen> {
   }
 }
 
-class _Selector extends StatelessWidget {
+class _Selector extends StatefulWidget {
   final List<Client> clients;
   final Set<String> selected;
   final void Function(String id, bool on) onToggle;
@@ -104,33 +104,89 @@ class _Selector extends StatelessWidget {
   });
 
   @override
+  State<_Selector> createState() => _SelectorState();
+}
+
+class _SelectorState extends State<_Selector> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final q = _query.trim().toLowerCase();
+    final visible = q.isEmpty
+        ? widget.clients
+        : widget.clients
+              .where(
+                (c) =>
+                    c.name.toLowerCase().contains(q) ||
+                    c.address.toLowerCase().contains(q),
+              )
+              .toList();
     return Column(
       children: [
-        Expanded(
-          child: ListView(
-            children: [
-              for (final c in clients)
-                CheckboxListTile(
-                  value: selected.contains(c.id),
-                  onChanged: (v) => onToggle(c.id, v ?? false),
-                  title: Text(c.name),
-                  subtitle: c.address.isEmpty ? null : Text(c.address),
-                ),
-            ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: TextField(
+            controller: _search,
+            onChanged: (v) => setState(() => _query = v),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Search clients',
+              prefixIcon: const Icon(Icons.search),
+              isDense: true,
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _search.clear();
+                        setState(() => _query = '');
+                      },
+                    ),
+            ),
           ),
+        ),
+        Expanded(
+          child: visible.isEmpty
+              ? Center(
+                  child: Text(
+                    'No clients match "$_query".',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: context.colors.textSecondary,
+                    ),
+                  ),
+                )
+              : ListView(
+                  children: [
+                    for (final c in visible)
+                      CheckboxListTile(
+                        value: widget.selected.contains(c.id),
+                        onChanged: (v) =>
+                            setState(() => widget.onToggle(c.id, v ?? false)),
+                        title: Text(c.name),
+                        subtitle: c.address.isEmpty ? null : Text(c.address),
+                      ),
+                  ],
+                ),
         ),
         SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: FilledButton.icon(
-              onPressed: onOptimize,
+              onPressed: widget.onOptimize,
               icon: const Icon(Icons.alt_route),
               label: Text(
-                selected.length < 2
+                widget.selected.length < 2
                     ? 'Select 2+ clients'
-                    : 'Optimize route (${selected.length})',
+                    : 'Optimize route (${widget.selected.length})',
               ),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),

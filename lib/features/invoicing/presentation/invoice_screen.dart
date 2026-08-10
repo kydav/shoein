@@ -61,9 +61,30 @@ class InvoiceScreen extends HookConsumerWidget {
       invoiceNumber: invoiceNo,
     );
 
+    // Render the PDF in-app with the printing package's Pdfium-backed preview
+    // instead of handing it to iOS's print controller (which crashes rendering
+    // some documents). The user can still print/share from the preview's own
+    // toolbar.
     Future<void> preview() async {
-      final bytes = await buildPdf();
-      await Printing.layoutPdf(onLayout: (_) async => bytes);
+      final navigator = Navigator.of(context);
+      await navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: Text('Invoice — ${client.name}')),
+            body: PdfPreview(
+              build: (_) => buildPdf(),
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              canDebug: false,
+              // Keep the OS print controller (which was crashing) out of the
+              // path — render in-app and let the user share the PDF instead.
+              allowPrinting: false,
+              allowSharing: true,
+              pdfFileName: 'invoice_$invoiceNo.pdf',
+            ),
+          ),
+        ),
+      );
     }
 
     Future<void> emailInvoice() async {

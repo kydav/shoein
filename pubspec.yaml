@@ -109,7 +109,7 @@ flutter_launcher_icons:
   # Android has a single launcher icon (no light/dark swap) — keep the light
   # look: horseshoe + glow on the warm off-white. Monochrome drives themed icons.
   adaptive_icon_background: "#F7F4EF"
-  adaptive_icon_foreground: "assets/icon/foreground.png"
+  adaptive_icon_foreground: "assets/icon/foreground_light.png"
   adaptive_icon_monochrome: "assets/icon/monochrome.png"
   min_sdk_android: 21
 
