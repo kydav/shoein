@@ -69,8 +69,10 @@ cover it.
 
 ## Later / stretch
 
-Client text reminders (prefilled SMS to the client), hoof photos per visit,
-invoicing / payment tracking, day/route map view, earnings summary.
+Planned post-v1 work is tracked in [ROADMAP.md](ROADMAP.md): card payments
+(Stripe), data export + CSV import, inventory management with order-to-dealer,
+client appointment reminders (SMS/email + `.ics`), offline-first with
+draft/queued visits, and horse profile photos.
 
 ## Invoicing  ✅ (built)
 
