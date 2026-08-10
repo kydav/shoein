@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Shoein&apos;</string>
+	<string>Shoein'</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -40,13 +40,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCalendarsUsageDescription</key>
-	<string>Shoein&apos; adds your appointments to your phone&apos;s calendar when you choose to.</string>
+	<string>Shoein' adds your appointments to your phone's calendar when you choose to.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Shoein&apos; uses the camera so you can add photos to a horse&apos;s visit log.</string>
+	<string>Shoein' uses the camera so you can add photos to a horse's visit log.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Shoein&apos; uses your location to show where you are on the map while viewing your clients.</string>
+	<string>Shoein' uses your location to show where you are on the map while viewing your clients.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Shoein&apos; lets you attach photos from your library to a horse&apos;s visit log.</string>
+	<string>Shoein' lets you attach photos from your library to a horse's visit log.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
