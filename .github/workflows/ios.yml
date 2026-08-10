@@ -40,7 +40,17 @@ jobs:
         env:
           MAPBOX_DOWNLOADS_TOKEN: ${{ secrets.MAPBOX_DOWNLOADS_TOKEN }}
         run: |
-          printf 'machine api.mapbox.com\n  login mapbox\n  password %s\n' "$MAPBOX_DOWNLOADS_TOKEN" >> ~/.netrc
+          # An empty/missing token writes a `password` line with no value, which
+          # leaves ~/.netrc ending mid-entry. Ruby's netrc gem — which CocoaPods
+          # reads for credentials — then raises "Unexpected EOF" on EVERY pod
+          # install, surfacing confusingly as the CDN "Couldn't determine repo
+          # type" error. Fail fast with a clear message instead.
+          if [ -z "$MAPBOX_DOWNLOADS_TOKEN" ]; then
+            echo "::error::MAPBOX_DOWNLOADS_TOKEN secret is empty — set it in repo secrets."
+            exit 1
+          fi
+          # No leading whitespace; one complete machine entry.
+          printf 'machine api.mapbox.com\nlogin mapbox\npassword %s\n' "$MAPBOX_DOWNLOADS_TOKEN" >> ~/.netrc
           chmod 600 ~/.netrc
 
       - name: Analyze
