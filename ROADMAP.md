@@ -80,6 +80,35 @@ have).
 
 ---
 
+## 7. Competitive parity — reaching & beating Hoofy
+
+[Hoofy](https://hoofyapp.com) ($12.99/mo, **iPhone only**, 7-day trial) is the
+most modern competitor. We already beat them on **platform (iOS + Android)**,
+**price ($6.99 vs $12.99, + annual)**, **longer trial (14 vs 7 days)**, **cloud
+photo backup** (theirs is on-device only), a real **route optimizer**, and a
+modern themed UI. Gaps to close so we match everything they do, then do it
+better:
+
+- **Mileage tracking for taxes** — auto-log miles per route/day/client with
+  IRS-rate summaries. Big farrier value (their headline tax feature). Derive
+  from route stops / geolocation; export in the CSV.
+- **A/R aging report** — 30/60/90-day overdue buckets, color-coded, per client.
+  Extends the earnings + invoicing data we already have.
+- **Per-horse safety flags** — "kicker / biter / requires sedation" badges shown
+  prominently on the horse tile and visit sheet. Cheap, high on-site value. Add
+  a `flags`/`tags` list to the Horse model.
+- **Per-horse billing rules** — a default price (and default work type) per
+  horse so logging a visit auto-fills the cost. Small change, big time-saver.
+- **Vet contacts** — a vet name/phone on the client or horse, one-tap to call.
+- **Weather on the schedule/route** — show the forecast for a route day (free
+  weather API). Nice-to-have that they advertise.
+- **High-contrast "sunlight" mode** — a bright, high-contrast theme for barn/road
+  use in direct sun. Directly counters their "sunlight-optimized" pitch; mostly
+  a theme variant on top of what we have.
+
+(Card payments, offline draft visits, and horse profile photos above also close
+Hoofy gaps.)
+
 ## Also noted (from the release readiness review)
 - **Pricing:** keep the low intro price to win early adopters, but grandfather
   them so it can be raised later without burning anyone.
