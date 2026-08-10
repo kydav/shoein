@@ -45,6 +45,8 @@
 	<string>Shoein' uses the camera so you can add photos to a horse's visit log.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Shoein' uses your location to show where you are on the map while viewing your clients.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Shoein' uses your location to show where you are on the map while viewing your clients.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Shoein' lets you attach photos from your library to a horse's visit log.</string>
 	<key>UIApplicationSceneManifest</key>
