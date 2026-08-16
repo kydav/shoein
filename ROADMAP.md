@@ -19,7 +19,7 @@ CSV of clients + service history (and/or an earnings CSV for taxes) and hands it
 to the share sheet. `csv` package, no backend. Signals data isn't locked in and
 doubles as a bookkeeping/tax feature.
 
-**Import (bigger):** reduce switching friction for a farrier with an existing
+**Import — ✅ SHIPPED 2026-08-16** (Profile → Import clients; template-based, clients-first, dedupe by name, geocodes addresses): reduce switching friction for a farrier with an existing
 spreadsheet.
 - **Template-based (preferred for v1):** provide a downloadable CSV template
   with fixed headers (name, phone, email, address, notes); they fill/upload it.

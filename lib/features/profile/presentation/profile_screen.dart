@@ -22,6 +22,7 @@ class ProfileScreen extends ConsumerWidget {
     final clients = ref.watch(clientsProvider).value ?? const [];
     final themeMode = ref.watch(themeModeProvider);
     final access = ref.watch(accessProvider);
+    final readOnly = ref.watch(isReadOnlyProvider);
     final daysLeft = ref.watch(trialDaysLeftProvider);
     final remindersEnabled = ref.watch(remindersEnabledProvider);
     final businessName = ref.watch(businessNameProvider);
@@ -160,6 +161,42 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       Text(
                         'Download your clients & full service history as CSV',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.colors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            onTap: () => context.push(readOnly ? '/paywall' : '/import'),
+            child: Row(
+              children: [
+                Icon(
+                  readOnly
+                      ? Icons.lock_outline_rounded
+                      : Icons.upload_file_rounded,
+                  color: kForge,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Import clients',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        'Bring clients in from a CSV spreadsheet',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context.colors.textSecondary,
                         ),
