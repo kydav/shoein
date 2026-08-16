@@ -14,7 +14,7 @@ for justifying the subscription. Full architecture is in PAYMENTS.md.
 
 ## 2. Data export + CSV import
 
-**Export (do first — cheap, high trust):** an "Export data" action that writes a
+**Export — ✅ SHIPPED 2026-08-16** (Profile → Export data): an "Export data" action that writes a
 CSV of clients + service history (and/or an earnings CSV for taxes) and hands it
 to the share sheet. `csv` package, no backend. Signals data isn't locked in and
 doubles as a bookkeeping/tax feature.

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shoein/core/presentation/widgets.dart';
 import 'package:shoein/core/providers/access_providers.dart';
 import 'package:shoein/core/providers/auth_provider.dart';
 import 'package:shoein/core/providers/data_providers.dart';
 import 'package:shoein/core/providers/settings_providers.dart';
+import 'package:shoein/core/services/export_service.dart';
 import 'package:shoein/core/services/notification_service.dart';
 import 'package:shoein/core/services/subscription_service.dart';
 import 'package:shoein/core/theme/app_theme.dart';
@@ -127,6 +129,37 @@ class ProfileScreen extends ConsumerWidget {
                       Text(
                         '${money.format(earnings.thisMonthPaid)} this month'
                         '${earnings.outstanding > 0 ? ' · ${money.format(earnings.outstanding)} unpaid' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.colors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SoftCard(
+            onTap: () => _exportData(context, ref),
+            child: Row(
+              children: [
+                const Icon(Icons.ios_share_rounded, color: kForge),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Export data',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        'Download your clients & full service history as CSV',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: context.colors.textSecondary,
                         ),
@@ -282,6 +315,44 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context);
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+  List<XFile>? files;
+  try {
+    files = await buildShoeinExport(ref.read(repositoryProvider));
+  } catch (_) {
+    navigator.pop();
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text("Couldn't export your data. Please try again."),
+      ),
+    );
+    return;
+  }
+  navigator.pop();
+  if (files == null) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Nothing to export yet — add a client first.'),
+      ),
+    );
+    return;
+  }
+  await SharePlus.instance.share(
+    ShareParams(
+      files: files,
+      subject: "Shoein' data export",
+      text: "Your Shoein' book — clients, horses, and full service history.",
+    ),
+  );
 }
 
 Future<void> _editBusinessInfo(BuildContext context, WidgetRef ref) async {
